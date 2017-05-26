@@ -635,7 +635,7 @@ function tagTemplateToStr(comp,viewModel){
 		
 		templatePre += childrenstr;
 		
-		templatePre += '\treturn '+subClazzName+';';
+		templatePre += '\t; return '+subClazzName+';';
 		
 		
 		if(viewModel){
