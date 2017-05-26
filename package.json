@@ -1,0 +1,39 @@
+{
+  "name": "ferrugemjs-node",
+  "version": "0.13.0",
+  "description": "a node package to convert html template to Incremental DOM",
+  "main": "index.js",
+  "scripts": {
+    "w:test": "nodemon -w test/ -w parse/ test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ferrugemjs/ferrugemjs-node.git"
+  },
+  "files": [
+    "index.js",
+    "parse/parse.js"
+  ],
+  "keywords": [
+    "IDOM",
+    "incremental",
+    "DOM",
+    "Template",
+    "FerrugemJS",
+    "convert"
+  ],
+  "author": "ferrugemjs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ferrugemjs/ferrugemjs-node/issues"
+  },
+  "homepage": "https://github.com/ferrugemjs/ferrugemjs-node#readme",
+  "devDependencies": {
+    "js-beautify": "^1.6.14",
+    "nodemon": "^1.11.0"
+  },
+  "dependencies": {
+    "domhandler": "^2.3.0",
+    "htmlparser2": "^3.9.2"
+  }
+}
