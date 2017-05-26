@@ -154,7 +154,7 @@ var rawHtml
 		    console.log('teste');
 		</script>
 		<div skip="this.region > 2323" id="mortadela">
-			<span>humm???</span>
+			<span>humm???2</span>
 		</div>
 	</div>
 </template>`;
