@@ -1,4 +1,4 @@
-# gulp-ferrugemjs
+# ferrugemjs-node
 a npm package to convert html to incremental dom
 
 
