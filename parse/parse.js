@@ -676,9 +676,7 @@ function tagStyleToStr(comp){
 function resolveTagRequire(comp){	
 	var fromstr = comp.attribs["from"];	
 	//suporte aos plugins mais conhecidos
-	if(fromstr.lastIndexOf(".css!") > -1 || fromstr.indexOf("css!") == 0 || fromstr.indexOf("style!") == 0){
-		//console.log('eh style',fromstr)
-		
+	if( /\.?css\!?$/gm.test(fromstr) || fromstr.indexOf("style!") == 0){		
 		return {
 			type:"style"
 			,path:fromstr

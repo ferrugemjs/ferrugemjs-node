@@ -23,6 +23,7 @@ var rawHtml
 	<require from="./test/tpl-c3 as tpl-c13" type="namespace"/>
 	<require from="./test/style-a.css!"/>
 	<require from="css!./test/style-b.css"/>
+	<require from="./test/style-b.css"/>
 	<require from="style!./test/style-c.css"/>
 	<script></script>
 	<style>
