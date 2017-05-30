@@ -6,6 +6,7 @@ var beautify = require('js-beautify').js_beautify;
 var rawHtml 
 = 
 `<template no-view-model="true">
+	<require from="css!../commons/assets/css/theme.min"/>
 	<require from="../commons/assets/commons-style.css!"/>
 	<require from="eliorcohen/semantic-ui/dist/semantic.min.css!"/>
 	<require from="jquery as jq" type="script"/>	
