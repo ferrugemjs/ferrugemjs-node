@@ -571,7 +571,7 @@ function tagTemplateToStr(comp,viewModel){
 										.filter(reqcomp=>reqcomp.type=="script")
 										.map(reqcomp=>reqcomp.alias.replace(/_/g,"-"));
 		
-		templatePre += 'define(["exports","incremental-dom","ferrugemjs/bootstrapper"';
+		templatePre += 'define(["exports","incremental-dom","ferrugemjs/component-factory"';
 
 		if(requiresPath.length){
 			templatePre += ',';
