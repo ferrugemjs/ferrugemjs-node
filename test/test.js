@@ -158,6 +158,18 @@ var rawHtml
 		<div skip="this.region > 2323" id="mortadela">
 			<span>humm???2</span>
 		</div>
+		<if condition="this.title">
+			true
+		<elseif condition="this.title < 0">
+			false
+		</elseif>	
+		<elseif condition="this.title > 0">
+			false2
+		</elseif>
+		<else>
+			maybe
+		</else>	
+		</if>
 	</div>
 </template>`;
 
