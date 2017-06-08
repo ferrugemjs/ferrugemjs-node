@@ -72,7 +72,7 @@ var rawHtml
 		<script if="1 < 8">
 			$jq('open');
 			$jq('other magic');
-			@this.test();
+			this.test();
 		</script>
 
 <!--
@@ -176,6 +176,6 @@ var rawHtml
 
 console.log(
 
-beautify(fjsparse(rawHtml,{}), { indent_size: 4 }) 
+beautify(fjsparse(rawHtml,{viewModel:'text-comp'}), { indent_size: 4 }) 
 
 )

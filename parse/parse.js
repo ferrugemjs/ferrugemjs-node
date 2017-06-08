@@ -198,30 +198,30 @@ var mod_tmp_attr_str = mod_tmp_attr_str_.replace(/\"\$\{([^}]*)\}\"/g,function($
 }
 
 function tagSkipToStr(comp){
-	var txtIf = '\tif('+contextToAlias(comp.attribs.condition)+'){';
-	txtIf += '\t_idom.skip()';
-	txtIf += '\t}else{';
+	var txtIf = '\tif('+contextToAlias(comp.attribs.condition)+'){\n';
+	txtIf += '\t_idom.skip()\n';
+	txtIf += '\t}else{\n';
 	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp));
-	txtIf += '\t};';
+	txtIf += '\t};\n';
 	return txtIf;
 }
 
 function tagIfToStr(comp){
-	var txtIf = '\tif('+contextToAlias(comp.attribs.condition)+'){';
+	var txtIf = '\t\nif('+contextToAlias(comp.attribs.condition)+'){\n';
 	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp));
-	txtIf += '\t};';
+	txtIf += '\t};\n';
 	return txtIf;
 }
 
 function tagElseToStr(comp){
-	var txtElse = '\t}else{';
+	var txtElse = '\t\n}else{\n';
 	comp.children.forEach(sub_comp => txtElse += '\t'+componentToStr(sub_comp));
 	txtElse += '\t';
 	return txtElse;
 }
 
 function tagElseIfToStr(comp){
-	var txtElseIf = '\t}else if('+contextToAlias(comp.attribs.condition)+'){';
+	var txtElseIf = '\t\n}else if('+contextToAlias(comp.attribs.condition)+'){\n';
 	comp.children.forEach(sub_comp => txtElseIf += '\t'+componentToStr(sub_comp));
 	txtElseIf += '\t';
 	return txtElseIf;
@@ -239,24 +239,24 @@ function tagForToStr(comp){
 	//lasts_item_alias.push(sub_array_each[0]);
 	//renderIDOMHTML += '\t'+appendContext(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){\n';
 	
-	var txtFor = '\t'+contextToAlias(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){';
+	var txtFor = '\n\t'+contextToAlias(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){';
 	comp.children.forEach(sub_comp => txtFor += '\t'+componentToStr(sub_comp));
-	txtFor += '\t});';
+	txtFor += '\t});\n';
 	return txtFor;
 }
 
 function tagTextToStr(comp){
 	var text = comp.data;
 	if(text && text.trim()){
-		return '\t_idom.text("'+text.trim().replace(/\$\{([^}]*)\}/g,function($1,$2){  								
+		return '\t\n_idom.text("'+text.trim().replace(/\$\{([^}]*)\}/g,function($1,$2){  								
   			return '"+('+contextToAlias($2)+')+"';
-		})+'");\t';
+		})+'");\t\n';
 	}
 	return "";
 }
 
 function tagContentToStr(comp){
-	return '\t_libfjs_mod_.default.content.call('+context_alias+');';
+	return '\t\n_libfjs_mod_.default.content.call('+context_alias+');\n';
 }
 
 function tagRegisterForToStr(comp){
@@ -284,7 +284,7 @@ function tagCommandToStr(comp){
 		var text = comp.children[0].data;
 		if(text && text.trim()){
 			//return text.replace(/@this\./gm,context_alias+'.');
-			return '(function(){'+text+'}.bind('+context_alias+'))();';
+			return '\n(function(){'+text+'}.bind('+context_alias+'))();\n';
 		};
 	}
 	return '';
@@ -300,7 +300,7 @@ function tagRouteToStr(comp){
 		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
 	}
 
-	var routeStr = '_$_inst_$_.routes.push('+JSON.stringify(attrsCamel)+');';
+	var routeStr = '\n_$_inst_$_.routes.push('+JSON.stringify(attrsCamel)+');\n';
 	return routeStr;
 }
 
@@ -361,7 +361,7 @@ function tagCustomToStr(comp){
 	
 	//console.log('aqui----->',separate_attrs.dinamic)
 
-	basicTag = '\t(function(){ var _$_inst_$_ = _libfjs_mod_.default.build({"classFactory":'+tagname_constructor+',"tag":"div","alias":"'+name+'","target":"","hostVars":'+_tmp_host_vars_+',"staticVars":'+_tmp_static_vars+'});';
+	basicTag = '\t\n(function(){\n var _$_inst_$_ = _libfjs_mod_.default.build({"classFactory":'+tagname_constructor+',"tag":"div","alias":"'+name+'","target":"","hostVars":'+_tmp_host_vars_+',"staticVars":'+_tmp_static_vars+'});\n';
 	
 	if(comp.children && comp.children.length){
 		var hasRoute = comp.children.some(sub_comp=>sub_comp.name=="route");
@@ -370,14 +370,14 @@ function tagCustomToStr(comp){
 			//console.log(comp.children[1].type);
 			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
 		}else{		
-			basicTag += '\t_libfjs_mod_.default.content.call(_$_inst_$_,function(){';
+			basicTag += '\t\n_libfjs_mod_.default.content.call(_$_inst_$_,function(){\n';
 			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
-			basicTag += '\t});';
+			basicTag += '\t\n});\n';
 		}
 	}
 
-	basicTag += '\t_libfjs_mod_.default.reDraw.call(_$_inst_$_);';
-	basicTag += '\t})();';
+	basicTag += '\t\n_libfjs_mod_.default.reDraw.call(_$_inst_$_);\n';
+	basicTag += '\t\n})();\n';
 
 	return basicTag;
 }
@@ -400,7 +400,7 @@ function tagRpFunctionToStr(comp){
 			attrsCamel[keyCamel] = separate_attrs.static[key];
 		}	
 	}
-	rpfnStr += '\t'+comp.name.replace(/-/g,"_")+'.default('+attrToContext(attrsCamel)+');'
+	rpfnStr += '\t'+comp.name.replace(/-/g,"_")+'.default('+attrToContext(attrsCamel)+');\n'
 	return rpfnStr;
 }
 
@@ -435,17 +435,17 @@ function tagComposeToStr(comp){
 	
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic);
 	
-	var basicTag = '\t_idom.elementOpen("div",'+static_key+','+mod_tmp_static_attr_str_array_flat+','+mod_tmp_attr_str+');';
-	basicTag += '\t_idom.elementClose("div");'
+	var basicTag = '\n\t_idom.elementOpen("div",'+static_key+','+mod_tmp_static_attr_str_array_flat+','+mod_tmp_attr_str+');\n';
+	basicTag += '\n\t_idom.elementClose("div");\n'
 	
-	basicTag += '\t_libfjs_mod_.default.compose("'+tmp_view+'",'+static_key+','+attrToContext(separateAttrsElement.dinamic)+','+mod_tmp_static_attr_str+',function(){';
+	basicTag += '\n\t_libfjs_mod_.default.compose("'+tmp_view+'",'+static_key+','+attrToContext(separateAttrsElement.dinamic)+','+mod_tmp_static_attr_str+',function(){\n';
 
 
 	if(comp.children){
 		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
 	}
 
-	basicTag += '\t});';
+	basicTag += '\n\t});\n';
 
 
 
@@ -489,11 +489,11 @@ function tagBasicToStr(comp){
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
 	var basicTag = '';
 
-	basicTag = '\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');';
+	basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
 	if(comp.children){
 		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
 	}
-	basicTag += '\t_idom.elementClose("'+comp.name+'");';
+	basicTag += '\n\t_idom.elementClose("'+comp.name+'");\n';
 	return basicTag;
 }
 
@@ -598,9 +598,9 @@ function tagTemplateToStr(comp,viewModel){
 		templatePre += '){';
 
 		if(viewModel){			
-			templatePre += '\n var _'+viewModelAlias+'_tmp = Object.keys('+viewModelAlias+')[0];';
+			templatePre += '\n\tvar _'+viewModelAlias+'_tmp = Object.keys('+viewModelAlias+')[0];\n';
 		}else{
-			templatePre +='\n var _'+tmp_mod_name+'_tmp = '+_tmp_constructor_no_view_+';';
+			templatePre +='\n\tvar _'+tmp_mod_name+'_tmp = '+_tmp_constructor_no_view_+';\n';
 		}
 
 		comp
@@ -610,20 +610,20 @@ function tagTemplateToStr(comp,viewModel){
 
 		templatePre +=  stylesStr+'\t';
 	
-		var subClazzName = '\t_clazz_sub_'+nextUID()+'_tmp';
-		templatePre += '\texports.default = (function(super_clazz){';
-		templatePre += '\tfunction '+subClazzName+'(){';
-		templatePre += '\tsuper_clazz.call(this);';
-		templatePre += '\t}';
-		templatePre += '\t'+subClazzName+'.prototype = Object.create(super_clazz.prototype);';
-		templatePre += '\t'+subClazzName+'.prototype.constructor = '+subClazzName+';';
+		var subClazzName = '_clazz_sub_'+nextUID()+'_tmp';
+		templatePre += 'exports.default = (function(super_clazz){\n';
+		templatePre += '\t\tfunction '+subClazzName+'(){\n';
+		templatePre += '\t\t\tsuper_clazz.call(this);\n';
+		templatePre += '\t\t};\n';
+		templatePre += '\t\t'+subClazzName+'.prototype = Object.create(super_clazz.prototype);\n';
+		templatePre += '\t\t'+subClazzName+'.prototype.constructor = '+subClazzName+';\n';
 
-		templatePre += '\t'+subClazzName+'.prototype._$attrs$_ = '+JSON.stringify(firstElementAttrs)+';';
+		templatePre += '\t\t'+subClazzName+'.prototype._$attrs$_ = '+JSON.stringify(firstElementAttrs)+';\n';
 
-		templatePre += '\t'+subClazzName+'.prototype.render = ';
+		templatePre += '\t\t'+subClazzName+'.prototype.render = ';
 		
 		var childrenstr = '';
-		childrenstr += '\tfunction('+context_alias+'){';
+		childrenstr += 'function('+context_alias+'){';
 
 
 
@@ -635,7 +635,7 @@ function tagTemplateToStr(comp,viewModel){
 		
 		templatePre += childrenstr;
 		
-		templatePre += '\t; return '+subClazzName+';';
+		templatePre += ';\n\t\treturn '+subClazzName+';\n';
 		
 		
 		if(viewModel){
@@ -643,10 +643,10 @@ function tagTemplateToStr(comp,viewModel){
 			//templatePre += ' })('+tmp_mod_name+'[_'+tmp_mod_name+'_tmp]);';
 			templatePre += '\t})('+viewModelAlias+'[_'+viewModelAlias+'_tmp]);';
 		}else{
-			templatePre += '\t})(function(){});';
+			templatePre += '\t})(function(){})';
 		}		
 		
-		templatePre += '\t});';
+		templatePre += '\n});';
 	
 		return templatePre;
 	    }else{
