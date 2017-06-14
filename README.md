@@ -7,11 +7,11 @@ ferrugemjs-node is a simple node package to converte template HTML engine to goo
 
 [![NPM](https://nodei.co/npm/ferrugemjs-node.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/ferrugemjs-node/)
 
-####Install
+#### Install
 
 'npm install ferrugemjs-node --save-dev'
 
-####Usage
+#### Usage
 
 ```js
 var ferrugemjs_node = require('ferrugemjs-node');//import the plugin
