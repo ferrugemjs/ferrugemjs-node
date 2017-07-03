@@ -284,7 +284,7 @@ function tagCommandToStr(comp){
 		var text = comp.children[0].data;
 		if(text && text.trim()){
 			//return text.replace(/@this\./gm,context_alias+'.');
-			return '\n(function(){'+text+'}.bind('+context_alias+'))();\n';
+			return '\n\t(function(){\n\t'+text.trim()+'\n\t}.bind('+context_alias+'))();\n';
 		};
 	}
 	return '';
@@ -665,10 +665,11 @@ function tagStyleToStr(comp){
 	var text = comp.children && comp.children[0] && comp.children[0].data;
 	if(text && text.trim()){
 		var styletxt = "";
-		styletxt += "\tvar tmp_style = document.createElement('style');";
-		styletxt += "\ttmp_style.type = 'text/css';";
-		styletxt += "\ttmp_style.innerHTML = '"+text.replace(/'/g,'"').replace(/\n/g,'')+"';";
-		styletxt += "\tdocument.getElementsByTagName('head')[0].appendChild(tmp_style);";
+		styletxt += "\n\tvar tmp_style = document.createElement('style');";
+		styletxt += "\n\ttmp_style.type = 'text/css';";
+		//parser.write(rawHtml.replace(/[\n\t\r]/g," "));
+		styletxt += "\n\ttmp_style.innerHTML = '"+text.replace(/'/g,'"').replace(/\n/g," '\n\t\t+' ")+"';";
+		styletxt += "\n\tdocument.getElementsByTagName('head')[0].appendChild(tmp_style);";
 		return styletxt;
 	}
 	return "";
@@ -831,7 +832,8 @@ module.exports = function(rawHtml,config){
 		}
 	});
 	var parser = new htmlparser.Parser(handler,{decodeEntities: true,recognizeSelfClosing:true});
-	parser.write(rawHtml.replace(/[\n\t\r]/g," "));
+	parser.write(rawHtml);
+	//parser.write(rawHtml.replace(/[\n\t\r]/g," "));
 	parser.done();
 	//liberando a memoria
 	flush();

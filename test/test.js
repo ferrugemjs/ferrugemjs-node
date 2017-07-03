@@ -33,7 +33,11 @@ var rawHtml
 		.test{
 			color:pink;
 			font-size:14px;
-			background-color:#fa404a
+			background-color:#fa404a;
+		}
+		.super-especial-hot > .hosuit{
+			margin:5px;
+			background-img:url('../assets/teste.png');
 		}
 	</style>
 	<div 
@@ -172,12 +176,19 @@ var rawHtml
 			maybe
 		</else>	
 		</if>
+		<script if="1 < 8">
+			$jq('open');
+			$jq('other magic');
+			this.test();
+		</script>
 	</div>
 </template>`;
 
 
 console.log(
 
-beautify(fjsparse(rawHtml,{viewModel:'text-comp'}), { indent_size: 4 }) 
+	//beautify(
+	fjsparse(rawHtml,{viewModel:'text-comp'})
+	//, { indent_size: 4 }) 
 
 )
