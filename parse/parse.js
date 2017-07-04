@@ -668,7 +668,8 @@ function tagStyleToStr(comp){
 		styletxt += "\n\tvar tmp_style = document.createElement('style');";
 		styletxt += "\n\ttmp_style.type = 'text/css';";
 		//parser.write(rawHtml.replace(/[\n\t\r]/g," "));
-		styletxt += "\n\ttmp_style.innerHTML = '"+text.replace(/'/g,'"').replace(/\n/g," '\n\t\t+' ")+"';";
+		//.replace(/\n/g," '\n\t\t+' ")
+		styletxt += "\n\ttmp_style.innerHTML = '"+text.replace(/'/g,'"').replace(/^./gm,"\t\t'\\n").replace(/\n/gm,"'+\n")+"';";
 		styletxt += "\n\tdocument.getElementsByTagName('head')[0].appendChild(tmp_style);";
 		return styletxt;
 	}
