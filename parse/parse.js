@@ -458,33 +458,81 @@ function tagBasicToStr(comp){
 		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
 		delete comp.attribs["key:id"];
 	}
+	var separateAttrsElement = separateAttribs(comp.attribs);
+	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
+	
+	for(key in separateAttrsElement.static){		
+		if(["disabled","checked","selected"].indexOf(key) > -1){
+			if(separateAttrsElement.static[key] === "" || separateAttrsElement.static[key] === key){
+				//really is static
+				separateAttrsElement.static[key] = key;
+			}else if(['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1){				
+				separateAttrsElement.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
+				delete separateAttrsElement.static[key];
+			}
+		}
+	};
+
+	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
+
+	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
+	var basicTag = '';
+
+	basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
+	if(comp.children){
+		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
+	}
+	basicTag += '\n\t_idom.elementClose("'+comp.name+'");\n';
+	return basicTag;
+}
+
+function tagBasicToStr_(comp){
+	var static_key = 'null';
+	if(comp.attribs && comp.attribs["key:id"]){
+		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
+		delete comp.attribs["key:id"];
+	}
 
 	var separateAttrsElement = separateAttribs(comp.attribs)
 
-	var type = (separateAttrsElement.static?separateAttrsElement.static["type"]:"");
+	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
 	
 	//var  = '';
 
 	var negateAttribute = '';
 
-	if(comp.name == 'input' && (type == 'checkbox'||type == 'radio') && separateAttrsElement.dinamic["checked"]){
+	if(comp.name === 'input' && (type === 'checkbox'||type === 'radio') && separateAttrsElement.dinamic["checked"]){
 		negateAttribute = "checked";
-	}else if(comp.name == 'option' && separateAttrsElement.dinamic["selected"]){
+	}else if(comp.name === 'option' && separateAttrsElement.dinamic["selected"]){
 		negateAttribute = "selected";
 	}
 
-	if((['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1) && separateAttrsElement.dinamic["disabled"]){
-		var disabledCondition = separateAttrsElement.dinamic["disabled"];
-		separateAttrsElement.dinamic["disabled"] = disabledCondition.substring(0,disabledCondition.length-1)+"?new String('disabled'):null}";
+	var hasDisabledAttr = "disabled" in separateAttrsElement.static;
+	var disabledCondition = separateAttrsElement.static["disabled"];
+	//console.log(hasDisabledAttr,comp.name);
+	if(hasDisabledAttr && (disabledCondition === "" || disabledCondition === "disabled")){
+		separateAttrsElement.static["disabled"] = "disabled";
+	}else if(hasDisabledAttr && (['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1)){
+		console.log(comp.attribs);
+			//comp.attribs["disabled"] = 
+		separateAttrsElement.dinamic["disabled"] = disabledCondition+" ? new String('disabled') : null}";
+// disabledCondition+" ? new String('disabled') : null}";
+		delete separateAttrsElement.static["disabled"];
 	}
+/*
+	if((['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1) && hasDisabledCondition){
+		var disabledCondition = separateAttrsElement.static["disabled"];
+		separateAttrsElement.dinamic["disabled"] = disabledCondition.substring(0,disabledCondition.length-1)+"?new String('disabled'):null}";
 
+	}
+*/
 
 	if(negateAttribute){
 		var negateCondition = separateAttrsElement.dinamic[negateAttribute];
 		separateAttrsElement.dinamic[negateAttribute] = negateCondition.substring(0,negateCondition.length-1)+"?new String('"+negateAttribute+"'):null}";
 	}
 
-	var mod_tmp_static_attr_str=objStaticAttrToStr(separateAttrsElement.static);
+	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
 
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
 	var basicTag = '';

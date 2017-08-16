@@ -181,6 +181,13 @@ var rawHtml
 			$jq('other magic');
 			this.test();
 		</script>
+		<button disabled="1 === 4">
+			bala
+		</button>
+		<select disabled="disabled" onclick="alert('teste')">
+			<option selected="1 === 3"></option>
+		</select>
+		<input checked="this.a === 1" type="checkbox"/>
 	</div>
 </template>`;
 
