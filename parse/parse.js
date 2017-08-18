@@ -100,7 +100,11 @@ function separateAttribs(attribs){
 	var static_attr = {};
 	var dinamic_attr = {};
 	for (var key in attribs) {
-		if(key.indexOf(".") > 0){	
+		if(key.lastIndexOf(".if") > -1){
+			//obj_array.push(''+key+'');
+			//obj_array.push(''+attribs[key]+'');
+			static_attr[key] = attribs[key];
+		}else if(key.indexOf(".") > 0){	
 			//is a custom event		
 			dinamic_attr[key] =  contextToAlias(attribs[key]);	    			
 			 //dinamic_attr[key] = "${"+contextToAlias(attribs[key])+"}";
@@ -154,10 +158,6 @@ function objDinamicAttrToStr(attribs,tagName,type){
 				obj_array.push('#{#function($evt){\n'+context_alias+'.refresh({"'+( attr_pure )+'":$evt.target.value})\n}\n#}#');
 			}
 			//console.log(attribs[key])								
-		}else if(key.lastIndexOf(".if") > -1){
-			obj_array.push(''+key+'');
-			obj_array.push(''+attribs[key]+'');
-		
 		}else if(key.indexOf(".") > 0){
 			var eventStripped =	adjustEvents('on'+key.substring(0,key.indexOf("."))+'',attribs[key]);
 			obj_array.push(eventStripped.key);
@@ -453,13 +453,16 @@ function tagBasicToStr(comp){
 	var separateAttrsElement = separateAttribs(comp.attribs);
 	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
 	var regx = /(\w*)?\.if$/gm;
-	
-	
+		
 	for(key in separateAttrsElement.static){
-		console.log(key,regx.test(key));
+		console.log('459:',key,regx.test(key),(regx.test(key) ? regx.exec(key)[0] : null));
 		if(regx.test(key)){
-			console.log(key);
-		}		
+			//console.log(key);
+			// var attrcondi = regx.exec(key)[1];
+			// separateAttrsElement.dinamic[attrcondi] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
+			// delete separateAttrsElement.static[key];
+		}
+		/*		
 		if(["disabled","checked","selected"].indexOf(key) > -1){
 			if(separateAttrsElement.static[key] === "" || separateAttrsElement.static[key] === key){
 				//really is static
@@ -469,6 +472,7 @@ function tagBasicToStr(comp){
 				delete separateAttrsElement.static[key];
 			}
 		}
+		*/
 	};
 
 	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
