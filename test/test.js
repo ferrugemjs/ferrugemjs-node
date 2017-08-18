@@ -188,6 +188,7 @@ var rawHtml
 			<option selected="1 === 3"></option>
 		</select>
 		<input checked="this.a === 1" type="checkbox"/>
+		<input checked.if="this.a === 1" type="checkbox"/>
 	</div>
 </template>`;
 
