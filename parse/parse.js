@@ -338,12 +338,19 @@ function tagCustomToStr(comp){
 
 	var separate_attrs = separateAttribs(comp.attribs);
    	separate_attrs.static.is = comp.name;
-	//var _tmp_host_vars_ = objDinamicAttrToStr(separate_attrs.dinamic);
-	
-	//($_this_$.mark.bind($_this_$))
+
+	var regx = /(\w*)+\.if$/g;
+
 	for(key in separate_attrs.dinamic){
+		/*
+		if(regx.test(key)){
+			var attrcondi = key.replace(".if","");
+			separate_attrs.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? new String('"+attrcondi+"') : null }";
+			delete separate_attrs.static[key];
+		}else 
+		*/
 		if(key.indexOf(".") > 0){
-			//console.log(adjustEvents(key,separate_attrs.dinamic[key]));
+			console.log(adjustEvents(key,separate_attrs.dinamic[key]));
 			separate_attrs.dinamic[key] = adjustEvents(key,separate_attrs.dinamic[key]).value;
 		}
 	}
@@ -452,60 +459,12 @@ function tagBasicToStr(comp){
 	}
 	var separateAttrsElement = separateAttribs(comp.attribs);
 	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
-	var regx = /(\w*)?\.if$/gm;
-		
+	var regx = /(\w*)+\.if$/g;
 	for(key in separateAttrsElement.static){
-		console.log('459:',key,regx.test(key),(regx.test(key) ? regx.exec(key)[0] : null));
 		if(regx.test(key)){
-			//console.log(key);
-			// var attrcondi = regx.exec(key)[1];
-			// separateAttrsElement.dinamic[attrcondi] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
-			// delete separateAttrsElement.static[key];
-		}
-		/*		
-		if(["disabled","checked","selected"].indexOf(key) > -1){
-			if(separateAttrsElement.static[key] === "" || separateAttrsElement.static[key] === key){
-				//really is static
-				separateAttrsElement.static[key] = key;
-			}else if(['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1){				
-				separateAttrsElement.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
-				delete separateAttrsElement.static[key];
-			}
-		}
-		*/
-	};
-
-	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
-
-	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
-	var basicTag = '';
-
-	basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
-	if(comp.children){
-		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
-	}
-	basicTag += '\n\t_idom.elementClose("'+comp.name+'");\n';
-	return basicTag;
-}
-
-function tagBasicToStr_(comp){
-	var static_key = 'null';
-	if(comp.attribs && comp.attribs["key:id"]){
-		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
-		delete comp.attribs["key:id"];
-	}
-	var separateAttrsElement = separateAttribs(comp.attribs);
-	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
-	
-	for(key in separateAttrsElement.static){	
-		if(["disabled","enable","checked","selected"].indexOf(key) > -1){
-			if(separateAttrsElement.static[key] === "" || separateAttrsElement.static[key] === key){
-				//really is static
-				separateAttrsElement.static[key] = key;
-			}else if(['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1){				
-				separateAttrsElement.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
-				delete separateAttrsElement.static[key];
-			}
+			 var attrcondi = key.replace(".if","");
+			 separateAttrsElement.dinamic[attrcondi] = "${"+separateAttrsElement.static[key]+" ? new String('"+attrcondi+"') : null }";
+			 delete separateAttrsElement.static[key];
 		}
 	};
 

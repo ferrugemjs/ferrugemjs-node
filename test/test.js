@@ -189,6 +189,9 @@ var rawHtml
 		</select>
 		<input checked="this.a === 1" type="checkbox"/>
 		<input checked.if="this.a === 1" type="checkbox"/>
+		<input enable.if="5 < 8" type="text"/>
+		<input disabled.if="4 > 2" type="text"/>
+		<super-hero-land test="${1}" on.teste="this.teste" enable.if="a === b"/>
 	</div>
 </template>`;
 
