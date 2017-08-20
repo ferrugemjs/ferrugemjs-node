@@ -309,7 +309,7 @@ function tagCustomToStr(comp){
 	*/
 
 	if(!comp.attribs["key:id"]){
-		comp.attribs["key:id"]=static_key;
+		comp.attribs["key:id"] = static_key;
 	}
 
 	//comp.attribs["is"] = "compose-view";
@@ -342,16 +342,17 @@ function tagCustomToStr(comp){
 	var regx = /(\w*)+\.if$/g;
 
 	for(key in separate_attrs.dinamic){
-		/*
-		if(regx.test(key)){
-			var attrcondi = key.replace(".if","");
-			separate_attrs.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? new String('"+attrcondi+"') : null }";
-			delete separate_attrs.static[key];
-		}else 
-		*/
 		if(key.indexOf(".") > 0){
-			console.log(adjustEvents(key,separate_attrs.dinamic[key]));
 			separate_attrs.dinamic[key] = adjustEvents(key,separate_attrs.dinamic[key]).value;
+		}
+	}
+
+	for(key in separate_attrs.static){
+		if(regx.test(key)){
+			//console.log(key,separate_attrs.static[key]);
+			var attrcondi = key.replace(".if","");
+			separate_attrs.dinamic[key] = "${"+separate_attrs.static[key]+" ? new String('"+attrcondi+"') : null }";
+			delete separate_attrs.static[key];
 		}
 	}
 
