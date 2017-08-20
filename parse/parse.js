@@ -100,7 +100,11 @@ function separateAttribs(attribs){
 	var static_attr = {};
 	var dinamic_attr = {};
 	for (var key in attribs) {
-		if(key.indexOf(".") > 0){	
+		if(key.lastIndexOf(".if") > -1){
+			//obj_array.push(''+key+'');
+			//obj_array.push(''+attribs[key]+'');
+			static_attr[key] = attribs[key];
+		}else if(key.indexOf(".") > 0){	
 			//is a custom event		
 			dinamic_attr[key] =  contextToAlias(attribs[key]);	    			
 			 //dinamic_attr[key] = "${"+contextToAlias(attribs[key])+"}";
@@ -138,7 +142,8 @@ function objDinamicAttrToStr(attribs,tagName,type){
 	var bindField = "";	
 	for(var key in attribs){
 		var indxBind = 	key.indexOf(".bind");
-		if(indxBind > -1 && (tagName=="input" || tagName=="textarea" || tagName=="select")){
+		//console.log(key,key.lastIndexOf(".if") < 0);
+		if(indxBind > -1 && (tagName === "input" || tagName === "textarea" || tagName === "select")){
 			var evtstr = "on"+key.substring(0,indxBind);
 			obj_array.push(evtstr);
 			//console.log(attribs.type);
@@ -148,30 +153,17 @@ function objDinamicAttrToStr(attribs,tagName,type){
 			}else if(type=="checkbox"||type=="radio"){		
 				//console.log( attribs[key]);							
 				obj_array.push('#{#function($evt){\n'+context_alias+'.refresh({"'+( attr_pure )+'":$evt.target.checked?$evt.target.value:null})\n}\n#}#');
-			}else{		
+			}else{
 				//console.log( attribs[key]);							
 				obj_array.push('#{#function($evt){\n'+context_alias+'.refresh({"'+( attr_pure )+'":$evt.target.value})\n}\n#}#');
 			}
 			//console.log(attribs[key])								
 		}else if(key.indexOf(".") > 0){
-			
-			//talvez certo?
-			//obj_array.push('on'+key.substring(0,key.indexOf("."))+'');
-			//obj_array.push(attribs[key]);	
-
-
 			var eventStripped =	adjustEvents('on'+key.substring(0,key.indexOf("."))+'',attribs[key]);
 			obj_array.push(eventStripped.key);
-			//obj_array.push(eventStripped.value);
 			var vlFn = eventStripped.value;
-			//console.log(vlFn,"("+vlFn.substring(2,vlFn.length-1)+")");
 			obj_array.push("#{#"+vlFn.substring(2,vlFn.length-1)+"#}#");
-
-			//console.log(key,attribs[key],eventStripped.value);
-
-			//console.log(eventStripped.value)
-
-			//console.log(`aqui hoooo--->`,attribs[key])					
+			
 		}else{								
 			if(typeof attribs[key] === "string" && attribs[key].indexOf("${") === 0){
 				obj_array.push(''+key+'');
@@ -317,7 +309,7 @@ function tagCustomToStr(comp){
 	*/
 
 	if(!comp.attribs["key:id"]){
-		comp.attribs["key:id"]=static_key;
+		comp.attribs["key:id"] = static_key;
 	}
 
 	//comp.attribs["is"] = "compose-view";
@@ -346,13 +338,21 @@ function tagCustomToStr(comp){
 
 	var separate_attrs = separateAttribs(comp.attribs);
    	separate_attrs.static.is = comp.name;
-	//var _tmp_host_vars_ = objDinamicAttrToStr(separate_attrs.dinamic);
-	
-	//($_this_$.mark.bind($_this_$))
+
+	var regx = /(\w*)+\.if$/g;
+
 	for(key in separate_attrs.dinamic){
 		if(key.indexOf(".") > 0){
-			//console.log(adjustEvents(key,separate_attrs.dinamic[key]));
 			separate_attrs.dinamic[key] = adjustEvents(key,separate_attrs.dinamic[key]).value;
+		}
+	}
+
+	for(key in separate_attrs.static){
+		if(regx.test(key)){
+			//console.log(key,separate_attrs.static[key]);
+			var attrcondi = key.replace(".if","");
+			separate_attrs.dinamic[key] = "${"+separate_attrs.static[key]+" ? new String('"+attrcondi+"') : null }";
+			delete separate_attrs.static[key];
 		}
 	}
 
@@ -394,7 +394,7 @@ function tagRpFunctionToStr(comp){
 	for(var key in separate_attrs.static){
 		var keyCamel = slashToCamelCase(key);
 		//verificar se eh uma funcao
-		if(key.indexOf("on-")==0){
+		if(key.indexOf("on-") === 0){
 			attrsCamel[keyCamel] = adjustEvents(key,separate_attrs.static[key]).value;
 		}else{
 			attrsCamel[keyCamel] = separate_attrs.static[key];
@@ -460,77 +460,14 @@ function tagBasicToStr(comp){
 	}
 	var separateAttrsElement = separateAttribs(comp.attribs);
 	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
-	
-	for(key in separateAttrsElement.static){		
-		if(["disabled","checked","selected"].indexOf(key) > -1){
-			if(separateAttrsElement.static[key] === "" || separateAttrsElement.static[key] === key){
-				//really is static
-				separateAttrsElement.static[key] = key;
-			}else if(['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1){				
-				separateAttrsElement.dinamic[key] = "${"+separateAttrsElement.static[key]+" ? '"+key+"' : null }";
-				delete separateAttrsElement.static[key];
-			}
+	var regx = /(\w*)+\.if$/g;
+	for(key in separateAttrsElement.static){
+		if(regx.test(key)){
+			 var attrcondi = key.replace(".if","");
+			 separateAttrsElement.dinamic[attrcondi] = "${"+separateAttrsElement.static[key]+" ? new String('"+attrcondi+"') : null }";
+			 delete separateAttrsElement.static[key];
 		}
 	};
-
-	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
-
-	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
-	var basicTag = '';
-
-	basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
-	if(comp.children){
-		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
-	}
-	basicTag += '\n\t_idom.elementClose("'+comp.name+'");\n';
-	return basicTag;
-}
-
-function tagBasicToStr_(comp){
-	var static_key = 'null';
-	if(comp.attribs && comp.attribs["key:id"]){
-		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
-		delete comp.attribs["key:id"];
-	}
-
-	var separateAttrsElement = separateAttribs(comp.attribs)
-
-	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
-	
-	//var  = '';
-
-	var negateAttribute = '';
-
-	if(comp.name === 'input' && (type === 'checkbox'||type === 'radio') && separateAttrsElement.dinamic["checked"]){
-		negateAttribute = "checked";
-	}else if(comp.name === 'option' && separateAttrsElement.dinamic["selected"]){
-		negateAttribute = "selected";
-	}
-
-	var hasDisabledAttr = "disabled" in separateAttrsElement.static;
-	var disabledCondition = separateAttrsElement.static["disabled"];
-	//console.log(hasDisabledAttr,comp.name);
-	if(hasDisabledAttr && (disabledCondition === "" || disabledCondition === "disabled")){
-		separateAttrsElement.static["disabled"] = "disabled";
-	}else if(hasDisabledAttr && (['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1)){
-		console.log(comp.attribs);
-			//comp.attribs["disabled"] = 
-		separateAttrsElement.dinamic["disabled"] = disabledCondition+" ? new String('disabled') : null}";
-// disabledCondition+" ? new String('disabled') : null}";
-		delete separateAttrsElement.static["disabled"];
-	}
-/*
-	if((['a','form','option','input','select','button','textarea','fieldset','optgroup','keygen'].indexOf(comp.name) > -1) && hasDisabledCondition){
-		var disabledCondition = separateAttrsElement.static["disabled"];
-		separateAttrsElement.dinamic["disabled"] = disabledCondition.substring(0,disabledCondition.length-1)+"?new String('disabled'):null}";
-
-	}
-*/
-
-	if(negateAttribute){
-		var negateCondition = separateAttrsElement.dinamic[negateAttribute];
-		separateAttrsElement.dinamic[negateAttribute] = negateCondition.substring(0,negateCondition.length-1)+"?new String('"+negateAttribute+"'):null}";
-	}
 
 	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
 
