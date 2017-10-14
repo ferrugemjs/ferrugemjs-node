@@ -488,11 +488,10 @@ function tagTemplateToStr(comp,viewModel){
 	var templatePre = "";	
 	var requiresComp = [];
 	var viewModelAlias = "";
-
-	if(comp.attribs && comp.attribs["no-view-model"]){
+	if(comp.attribs && typeof comp.attribs["no-model"] === 'string'){
 		viewModel = "";
-	}else if(comp.attribs && comp.attribs["view-model"]){
-		viewModel = comp.attribs["view-model"];
+	}else if(comp.attribs && comp.attribs["model"]){
+		viewModel = comp.attribs["model"];
 		viewModelAlias = '_'+pathToAlias(viewModel).alias.replace(/-/g,"_");
 		requiresComp.push({type: 'controller', path: viewModel, alias:viewModelAlias });
 	}else{

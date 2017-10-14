@@ -5,7 +5,7 @@ var beautify = require('js-beautify').js_beautify;
 //<template no-view-model="true">
 var rawHtml 
 = 
-`<template no-view-model="true">
+`<template no-model>
 	<require from="css!../commons/assets/css/theme.min"/>
 	<require from="./test/sass/style.scss"/>
 	<require from="./test/less/style.less"/>
@@ -137,10 +137,6 @@ var rawHtml
 			change.trigger="this.refresh({a:this.b})"	
 		>teste</a>
 		<compose 
-			key:id="h123"
-			view:from="./newview/statck-plz"
-		></compose>
-		<compose 
 			key:id="\${this.uid}"
 			view:from="./newview/statck-plz2"
 		></compose>
@@ -192,6 +188,10 @@ var rawHtml
 		<input enable.if="5 < 8" type="text"/>
 		<input disabled.if="4 > 2" type="text"/>
 		<super-hero-land test="${1}" on.teste="this.teste" enable.if="a === b"/>
+		<compose 
+			key:id="h123"
+			view:from="./newview/statck-plz"
+		></compose>
 	</div>
 </template>`;
 
@@ -199,7 +199,7 @@ var rawHtml
 console.log(
 
 	//beautify(
-	fjsparse(rawHtml,{viewModel:'text-comp'})
+	fjsparse(rawHtml,{viewModel:'test-comp'})
 	//, { indent_size: 4 }) 
 
 )
