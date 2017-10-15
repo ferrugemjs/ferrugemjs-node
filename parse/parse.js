@@ -1,13 +1,13 @@
 var htmlparser = require("htmlparser2");
+var generate = require("nanoid/generate");
 
 var buffer = [];
 var context_alias = '$_this_$';
 var requireScriptList = [];
 
-var incrementalUID = new Date().getTime();
-
 function nextUID(){
-	incrementalUID++;
+	let alphabet = 'abcdefghijklmnopkrstuvwxzABCDEFGHIJKLMNOPKRSTUVWXZ';
+	var incrementalUID = generate(alphabet,3)+generate(`0123456789_${alphabet}`,19);
 	return incrementalUID;
 }
 
@@ -415,11 +415,14 @@ function tagComposeToStr(comp){
 	if(comp.attribs && comp.attribs["key:id"]){
 		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
 		//delete comp.attribs["key:id"];
-		comp.attribs["key-id"]=comp.attribs["key:id"];
+		comp.attribs["key-id"] = comp.attribs["key:id"];
+		comp.attribs["id"] = comp.attribs["key:id"];
 	}else{
-		comp.attribs["key:id"]=static_key.replace(/"/g,"");
-		comp.attribs["key-id"]=static_key.replace(/"/g,"");
+		comp.attribs["key:id"] = static_key.replace(/"/g,"");
+		comp.attribs["key-id"] = static_key.replace(/"/g,"");
+		comp.attribs["id"] = static_key.replace(/"/g,"");
 	}
+	
 
 	comp.attribs["is"] = "compose-view";
 
@@ -435,8 +438,10 @@ function tagComposeToStr(comp){
 	
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic);
 	
+	//console.log(mod_tmp_static_attr_str_array_flat);
+
 	var basicTag = '\n\t_idom.elementOpen("div",'+static_key+','+mod_tmp_static_attr_str_array_flat+','+mod_tmp_attr_str+');\n';
-	basicTag += '\n\t_idom.elementClose("div");\n'
+	basicTag += '\n\t_idom.elementClose("div");\n';
 	
 	basicTag += '\n\t_libfjs_mod_.default.compose("'+tmp_view+'",'+static_key+','+attrToContext(separateAttrsElement.dinamic)+','+mod_tmp_static_attr_str+',function(){\n';
 
