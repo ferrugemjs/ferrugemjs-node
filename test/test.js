@@ -192,6 +192,11 @@ var rawHtml
 			key:id="h123"
 			view:from="./newview/statck-plz"
 		></compose>
+		<span>
+			test of text with whitespace <i> a </i>
+			not allowed
+			with test
+		</span>
 	</div>
 </template>`;
 

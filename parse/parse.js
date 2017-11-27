@@ -240,7 +240,7 @@ function tagForToStr(comp){
 function tagTextToStr(comp){
 	var text = comp.data;
 	if(text && text.trim()){
-		return '\t\n_idom.text("'+text.trim().replace(/\$\{([^}]*)\}/g,function($1,$2){  								
+		return '\t\n_idom.text("'+text.replace(/\n/g," ").replace(/\t/g,"").replace(/\$\{([^}]*)\}/g,function($1,$2){  								
   			return '"+('+contextToAlias($2)+')+"';
 		})+'");\t\n';
 	}
