@@ -240,9 +240,14 @@ function tagForToStr(comp){
 function tagTextToStr(comp){
 	var text = comp.data;
 	if(text && text.trim()){
-		return '\t\n_idom.text("'+text.replace(/\n/g," ").replace(/\t/g,"").replace(/\$\{([^}]*)\}/g,function($1,$2){  								
+		var txtReplace = "-x-abc"+new Date().getTime()+"zxv-x-" ;
+		//var regexReplace = new RegExp(txtReplace,'g');
+		var strFormated = text.replace(/\s/g,txtReplace).trim().replace(/\n/g,' ').replace(/\$\{([^}]*)\}/g,function($1,$2){  								
   			return '"+('+contextToAlias($2)+')+"';
-		})+'");\t\n';
+		});
+		strFormated = strFormated.replace(/\t/g,'').replace(new RegExp(txtReplace,'g')," ");
+		var formated = '\t\n_idom.text("'+strFormated+'");\t\n';
+		return formated;
 	}
 	return "";
 }
@@ -830,3 +835,4 @@ module.exports = function(rawHtml,config){
 	return finalBuffer;
 
 }
+
