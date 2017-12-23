@@ -672,7 +672,7 @@ function tagStyleToStr(comp){
 function resolveTagRequire(comp){	
 	var fromstr = comp.attribs["from"];	
 	//suporte aos plugins mais conhecidos
-	if( /^(css|style)!/gm.test(fromstr) || /less!?$/gm.test(fromstr) || /scss!?$/gm.test(fromstr) || /css!?$/gm.test(fromstr) || fromstr.indexOf("style!") == 0){		
+	if( /^(css|style)!/gm.test(fromstr) || /\.(sass|scss|styl|css|less)$/gm.test(fromstr) || /scss!?$/gm.test(fromstr) || /css!$/gm.test(fromstr) || fromstr.indexOf("style!") === 0){
 		return {
 			type:"style"
 			,path:fromstr

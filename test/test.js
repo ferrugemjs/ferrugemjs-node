@@ -6,8 +6,10 @@ var beautify = require('js-beautify').js_beautify;
 var rawHtml 
 = 
 `<template no-model>
-	<require from="css!../commons/assets/css/theme.min"/>
-	<require from="./test/sass/style.scss"/>
+	<require from="./test/sass/style.sass"/>
+	<require from="./test/scss/style.scss"/>
+	<require from="./test/stylus/style.styl"/>
+	<require from="css!../commons/assets/css/theme.min"/>	
 	<require from="./test/less/style.less"/>
 	<require from="../commons/assets/commons-style.css!"/>
 	<require from="eliorcohen/semantic-ui/dist/semantic.min.css!"/>
