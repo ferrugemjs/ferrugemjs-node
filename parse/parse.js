@@ -4,6 +4,7 @@ var generate = require("nanoid/generate");
 var buffer = [];
 var context_alias = '$_this_$';
 var requireScriptList = [];
+var parser_configs = {templateExtension:".html",viewModel:"testeViewModel"};
 
 function nextUID(){
 	let alphabet = 'abcdefghijklmnopkrstuvwxzABCDEFGHIJKLMNOPKRSTUVWXZ';
@@ -699,7 +700,7 @@ function resolveTagRequire(comp){
 											
 	return {
 		type:'template'
-		,path:tagobject.url+'.html'
+		,path:tagobject.url + parser_configs.templateExtension
 		,alias:"_"+tagobject.alias.replace(/-/g,"_")	
 	}		
 	
@@ -818,6 +819,7 @@ function componentToStr(comp){
 module.exports = function(rawHtml,config){
 	flush();
 	var finalBuffer = "";
+	parser_configs = Object.assign({},parser_configs,config);
 	var handler = new htmlparser.DomHandler(function (error, dom) {
 	    if (error){
 	     	console.log(error)   
