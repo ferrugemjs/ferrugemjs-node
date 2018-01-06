@@ -194,11 +194,12 @@ var rawHtml
 			key:id="h123"
 			view:from="./newview/statck-plz"
 		></compose>
-		<span>
+		<span style="color:red">
 			test of text with whitespace <i> a </i>
 			not allowed
 			with test
 		</span>
+		<p style="\${'color:'+this.color}"></p>
 	</div>
 </template>`;
 

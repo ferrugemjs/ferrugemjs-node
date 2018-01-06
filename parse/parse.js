@@ -169,6 +169,10 @@ function objDinamicAttrToStr(attribs,tagName,type){
 			if(typeof attribs[key] === "string" && attribs[key].indexOf("${") === 0){
 				obj_array.push(''+key+'');
 				var vlFn = attribs[key];
+				if(key === "style" && vlFn.lastIndexOf(";") === (vlFn.length - 1) ){
+					var lastComman = vlFn.lastIndexOf(";");
+					vlFn = vlFn.substring(0,lastComman);
+				}
 				//obj_array.push(contextToAlias(attribs[key]));
 				obj_array.push(contextToAlias("#{#"+vlFn.substring(2,vlFn.length-1)+"#}#"));
 			}
