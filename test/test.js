@@ -200,6 +200,11 @@ var rawHtml
 			with test
 		</span>
 		<p style="\${'color:'+this.color}"></p>
+		<div class="cls-1"></div>
+		<div data-teste="{data.name}"></div>
+		<div class="cls-2"></div>
+		<div></div>
+		<div class="cls-1"></div>		
 	</div>
 </template>`;
 

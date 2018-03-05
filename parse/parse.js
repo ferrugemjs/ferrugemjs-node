@@ -489,7 +489,14 @@ function tagBasicToStr(comp){
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
 	var basicTag = '';
 
-	basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
+	if(static_key === 'null' && (mod_tmp_static_attr_str !== '[""]' || mod_tmp_attr_str !== '""')){
+		static_key = '"'+nextUID()+'"';
+	}
+	if(static_key === 'null'){
+		basicTag = '\n\t_idom.elementOpen("'+comp.name+'");\n';
+	}else{
+		basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
+	}
 	if(comp.children){
 		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
 	}
