@@ -237,7 +237,7 @@ function tagForToStr(comp){
 	//renderIDOMHTML += '\t'+appendContext(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){\n';
 	
 	var txtFor = '\n\t'+contextToAlias(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){';
-	comp.children.forEach(sub_comp => txtFor += '\t'+componentToStr(sub_comp));
+	comp.children.forEach(sub_comp => txtFor += '\t'+componentToStr(sub_comp,index_array));
 	txtFor += '\t});\n';
 	return txtFor;
 }
@@ -467,14 +467,14 @@ function tagComposeToStr(comp){
 	return basicTag;
 }
 
-function tagBasicToStr(comp){
+function tagBasicToStr(comp, indexLoopName){
 	var static_key = 'null';
 	if(comp.attribs && comp.attribs["key:id"]){
-		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
+		static_key =  encodeAndSetContext(comp.attribs["key:id"]);
 		delete comp.attribs["key:id"];
 	}
 	var separateAttrsElement = separateAttribs(comp.attribs);
-	var type = (separateAttrsElement.static ?separateAttrsElement.static["type"] : "");
+	var type = (separateAttrsElement.static ? separateAttrsElement.static["type"] : "");
 	var regx = /(\w*)+\.if$/g;
 	for(key in separateAttrsElement.static){
 		if(regx.test(key)){
@@ -488,17 +488,26 @@ function tagBasicToStr(comp){
 
 	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic,comp.name,type);
 	var basicTag = '';
+	var haveStaticKeyGen = false;
 
 	if(static_key === 'null' && (mod_tmp_static_attr_str !== '[""]' || mod_tmp_attr_str !== '""')){
-		static_key = '"'+nextUID()+'"';
+		static_key = nextUID();
+		haveStaticKeyGen = true;
 	}
 	if(static_key === 'null'){
 		basicTag = '\n\t_idom.elementOpen("'+comp.name+'");\n';
 	}else{
-		basicTag = '\n\t_idom.elementOpen("'+comp.name+'",'+static_key+','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
+		/*		
+		if(comp.parent && comp.parent.attribs && comp.parent.attribs['key:id']){
+			console.log(comp.parent.attribs['key:id']);
+			//static_key = comp.parent.attribs['key:id']+static_key;
+		}
+		*/
+		//comp.attribs['key:id'] = static_key;
+		basicTag = '\n\t_idom.elementOpen("'+comp.name+'","'+static_key + (indexLoopName && haveStaticKeyGen ? '_"+'+indexLoopName : '"') +','+mod_tmp_static_attr_str+','+mod_tmp_attr_str+');\n';
 	}
 	if(comp.children){
-		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
+		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp,indexLoopName));
 	}
 	basicTag += '\n\t_idom.elementClose("'+comp.name+'");\n';
 	return basicTag;
@@ -751,11 +760,16 @@ function forConditionExtractor(comp){
 		,attribs:{"each":comp.attribs["each"],"dinamic":true}
 	};
 	delete comp.attribs["each"];
+	/*
+	if(!comp.attribs["key:id"]){
+		comp.attribs["key:id"] = nextUID();
+	}
+	*/
 	forcomp.children=[comp];	
 	return componentToStr(forcomp);
 }
 
-function componentToStr(comp){
+function componentToStr(comp, indexLoopName){
 
 	//ignorando os comentarios
 	if(comp.type=='comment'){
@@ -764,67 +778,67 @@ function componentToStr(comp){
 
 	//eliminando os textos vazios
 	if(comp.type=='text'){
-		return tagTextToStr(comp);
+		return tagTextToStr(comp, indexLoopName);
 	}
 	//tratando os skips embutidos
 	if(comp.attribs && comp.attribs["skip"]){
-		return skipConditionExtractor(comp);
+		return skipConditionExtractor(comp, indexLoopName);
 	}
 	//tratando os ifs embutidos
 	if(comp.attribs && comp.attribs["if"]){
-		return ifConditionExtractor(comp);
+		return ifConditionExtractor(comp, indexLoopName);
 	}
 	//precisa esta aqui para evitar deadlock
 	if(comp.name=='for'){
-		return tagForToStr(comp);
+		return tagForToStr(comp, indexLoopName);
 	}
 
 	if(comp.attribs && comp.attribs["each"]){
-		return forConditionExtractor(comp);
+		return forConditionExtractor(comp, indexLoopName);
 	}
 
 	if(comp.name=='if'){
-		return tagIfToStr(comp);
+		return tagIfToStr(comp, indexLoopName);
 	}
 	if(comp.name=='skip'){
-		return tagSkipToStr(comp);
+		return tagSkipToStr(comp, indexLoopName);
 	}
 	if(comp.name=='else'){
-		return tagElseToStr(comp);
+		return tagElseToStr(comp, indexLoopName);
 	}
 	
 	if(comp.name=='elseif'){
-		return tagElseIfToStr(comp);
+		return tagElseIfToStr(comp, indexLoopName);
 	}
 	if(comp.name=='route'){
-		return tagRouteToStr(comp);
+		return tagRouteToStr(comp, indexLoopName);
 	}
 	if(comp.name=='compose'){		
-		return tagComposeToStr(comp);
+		return tagComposeToStr(comp, indexLoopName);
 	}
 
 	if(comp.name=='content'){		
-		return tagContentToStr(comp);
+		return tagContentToStr(comp, indexLoopName);
 	}
 
 	if(comp.name=='script'){
-		return tagCommandToStr(comp);
+		return tagCommandToStr(comp, indexLoopName);
 	}
 
 
 	if(comp.name=='register-for'){		
-		return tagRegisterForToStr(comp);
+		return tagRegisterForToStr(comp, indexLoopName);
 	}
 
 	if(comp.name.indexOf("-") > 0 && requireScriptList.indexOf(comp.name) > -1){
-		return tagRpFunctionToStr(comp);
+		return tagRpFunctionToStr(comp, indexLoopName);
 	}
 	
 	if(comp.name.indexOf('-') > 0){
-		return tagCustomToStr(comp);
+		return tagCustomToStr(comp, indexLoopName);
 	}	
 
-	return tagBasicToStr(comp);
+	return tagBasicToStr(comp, indexLoopName);
 }
 
 module.exports = function(rawHtml,config){

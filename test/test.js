@@ -204,7 +204,14 @@ var rawHtml
 		<div data-teste="{data.name}"></div>
 		<div class="cls-2"></div>
 		<div></div>
-		<div class="cls-1"></div>		
+		<div class="cls-1"></div>
+		<ul>
+			<li each="item,subindx in this.itens">
+				<span class="especial-loop">
+					<p class="basic">\${item.name}</p>					
+				</span>
+			</li>
+		</ul>	
 	</div>
 </template>`;
 
