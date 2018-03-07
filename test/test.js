@@ -211,7 +211,17 @@ var rawHtml
 					<p class="basic">\${item.name}</p>					
 				</span>
 			</li>
-		</ul>	
+		</ul>
+		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}">
+		</nyw:faster-comp>
+		<compose
+			each="item in this.itens"
+			quenada="\${this.opse}" 
+			id="dinamiccompose1" 
+			other-dinamic="\${this.title}"
+			view:from="\${this.myview}"
+		>
+		</compose>
 	</div>
 </template>`;
 

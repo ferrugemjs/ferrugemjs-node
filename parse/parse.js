@@ -228,7 +228,7 @@ function tagElseIfToStr(comp){
 function tagForToStr(comp){
 	var array_each = comp.attribs.each.split(" in ");
 	var sub_array_each = array_each[0].split(",");
-	var index_array = "$key_tmp_"+nextUID();
+	var index_array = "$tmp_index_name_"+nextUID();
 	if(sub_array_each.length > 1){
 		index_array = sub_array_each[1];
 		//lasts_index_alias.push(sub_array_each[1]);
@@ -306,10 +306,10 @@ function tagRouteToStr(comp){
 	return routeStr;
 }
 
-function tagCustomToStr(comp){
+function tagCustomToStr(comp, indexLoopName){
 
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
-	var static_key = 'tmp_key_inst_custom_comp'+nextUID();
+	var static_key = 'custom_comp_keyid_'+nextUID();
 	
 	/*
 	if(comp.attribs && comp.attribs["key:id"]){
@@ -317,9 +317,10 @@ function tagCustomToStr(comp){
 		delete comp.attribs["key:id"];
 	}
 	*/
-
+	var alreadyHasKeyId = true;
 	if(!comp.attribs["key:id"]){
 		comp.attribs["key:id"] = static_key;
+		alreadyHasKeyId = false;
 	}
 
 	//comp.attribs["is"] = "compose-view";
@@ -368,20 +369,26 @@ function tagCustomToStr(comp){
 
 	var  _tmp_host_vars_ = attrToContext(separate_attrs.dinamic);
 	var _tmp_static_vars = JSON.stringify(separate_attrs.static);
+
+	if(!alreadyHasKeyId && indexLoopName){
+		//static_key
+		//indexLoopName
+		_tmp_static_vars = _tmp_static_vars.replace(static_key,static_key+'_"+'+indexLoopName+'+"');
+	}
 	
 	//console.log('aqui----->',separate_attrs.dinamic)
 
 	basicTag = '\t\n(function(){\n var _$_inst_$_ = _libfjs_mod_.default.build({"classFactory":'+tagname_constructor+',"tag":"div","alias":"'+name+'","target":"","hostVars":'+_tmp_host_vars_+',"staticVars":'+_tmp_static_vars+'});\n';
 	
 	if(comp.children && comp.children.length){
-		var hasRoute = comp.children.some(sub_comp=>sub_comp.name=="route");
+		var hasRoute = comp.children.some(sub_comp=>sub_comp.name === "route");
 		//console.log('has route',hasRoute)
 		if(hasRoute){
 			//console.log(comp.children[1].type);
-			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
+			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp, indexLoopName));
 		}else{		
 			basicTag += '\t\n_libfjs_mod_.default.content.call(_$_inst_$_,function(){\n';
-			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
+			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp, indexLoopName));
 			basicTag += '\t\n});\n';
 		}
 	}
@@ -414,14 +421,15 @@ function tagRpFunctionToStr(comp){
 	return rpfnStr;
 }
 
-function tagComposeToStr(comp){
+function tagComposeToStr(comp, indexLoopName){
 	var attrview = "view:from";
 
 	if(!comp.attribs[attrview]){
 		return "";
 	}
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
-	var static_key = '"tmp_key_inst_compose_view'+nextUID()+'"';
+	var static_key = '"compose_keyid_'+nextUID()+'"';
+	var alreadyHasKeyId = true;
 	if(comp.attribs && comp.attribs["key:id"]){
 		static_key =  '"'+encodeAndSetContext(comp.attribs["key:id"])+'"';
 		//delete comp.attribs["key:id"];
@@ -431,8 +439,9 @@ function tagComposeToStr(comp){
 		comp.attribs["key:id"] = static_key.replace(/"/g,"");
 		comp.attribs["key-id"] = static_key.replace(/"/g,"");
 		comp.attribs["id"] = static_key.replace(/"/g,"");
+		alreadyHasKeyId = false;
 	}
-	
+	//indexLoopName
 
 	comp.attribs["is"] = "compose-view";
 
@@ -450,6 +459,14 @@ function tagComposeToStr(comp){
 	
 	//console.log(mod_tmp_static_attr_str_array_flat);
 
+	if(!alreadyHasKeyId && indexLoopName){
+
+		let tmpReplace = static_key + '+"_"+'+indexLoopName;
+		mod_tmp_static_attr_str_array_flat = mod_tmp_static_attr_str_array_flat.replace(new RegExp(static_key, 'g'),tmpReplace);
+		mod_tmp_static_attr_str = mod_tmp_static_attr_str.replace(new RegExp(static_key, 'g'),tmpReplace);
+		static_key = tmpReplace;
+	}
+
 	var basicTag = '\n\t_idom.elementOpen("div",'+static_key+','+mod_tmp_static_attr_str_array_flat+','+mod_tmp_attr_str+');\n';
 	basicTag += '\n\t_idom.elementClose("div");\n';
 	
@@ -457,7 +474,7 @@ function tagComposeToStr(comp){
 
 
 	if(comp.children){
-		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp));
+		comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp, indexLoopName));
 	}
 
 	basicTag += '\n\t});\n';
@@ -772,12 +789,12 @@ function forConditionExtractor(comp){
 function componentToStr(comp, indexLoopName){
 
 	//ignorando os comentarios
-	if(comp.type=='comment'){
+	if(comp.type === 'comment'){
 		return "";
 	}
 
 	//eliminando os textos vazios
-	if(comp.type=='text'){
+	if(comp.type === 'text'){
 		return tagTextToStr(comp, indexLoopName);
 	}
 	//tratando os skips embutidos
@@ -789,7 +806,7 @@ function componentToStr(comp, indexLoopName){
 		return ifConditionExtractor(comp, indexLoopName);
 	}
 	//precisa esta aqui para evitar deadlock
-	if(comp.name=='for'){
+	if(comp.name === 'for'){
 		return tagForToStr(comp, indexLoopName);
 	}
 
@@ -797,36 +814,36 @@ function componentToStr(comp, indexLoopName){
 		return forConditionExtractor(comp, indexLoopName);
 	}
 
-	if(comp.name=='if'){
+	if(comp.name === 'if'){
 		return tagIfToStr(comp, indexLoopName);
 	}
-	if(comp.name=='skip'){
+	if(comp.name === 'skip'){
 		return tagSkipToStr(comp, indexLoopName);
 	}
-	if(comp.name=='else'){
+	if(comp.name === 'else'){
 		return tagElseToStr(comp, indexLoopName);
 	}
 	
-	if(comp.name=='elseif'){
+	if(comp.name === 'elseif'){
 		return tagElseIfToStr(comp, indexLoopName);
 	}
-	if(comp.name=='route'){
+	if(comp.name === 'route'){
 		return tagRouteToStr(comp, indexLoopName);
 	}
-	if(comp.name=='compose'){		
+	if(comp.name === 'compose'){		
 		return tagComposeToStr(comp, indexLoopName);
 	}
 
-	if(comp.name=='content'){		
+	if(comp.name === 'content'){		
 		return tagContentToStr(comp, indexLoopName);
 	}
 
-	if(comp.name=='script'){
+	if(comp.name === 'script'){
 		return tagCommandToStr(comp, indexLoopName);
 	}
 
 
-	if(comp.name=='register-for'){		
+	if(comp.name === 'register-for'){		
 		return tagRegisterForToStr(comp, indexLoopName);
 	}
 
