@@ -194,38 +194,38 @@ var mod_tmp_attr_str = mod_tmp_attr_str_.replace(/\"\$\{([^}]*)\}\"/g,function($
 
 }
 
-function tagSkipToStr(comp){
+function tagSkipToStr(comp, indexLoopName){
 	var txtIf = '\tif('+contextToAlias(comp.attribs.condition)+'){\n';
 	txtIf += '\t_idom.skip()\n';
 	txtIf += '\t}else{\n';
-	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp));
+	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp, indexLoopName));
 	txtIf += '\t};\n';
 	return txtIf;
 }
 
-function tagIfToStr(comp){
+function tagIfToStr(comp, indexLoopName){
 	var txtIf = '\t\nif('+contextToAlias(comp.attribs.condition)+'){\n';
-	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp));
+	comp.children.forEach(sub_comp => txtIf += '\t'+componentToStr(sub_comp, indexLoopName));
 	txtIf += '\t};\n';
 	return txtIf;
 }
 
-function tagElseToStr(comp){
+function tagElseToStr(comp, indexLoopName){
 	var txtElse = '\t\n}else{\n';
-	comp.children.forEach(sub_comp => txtElse += '\t'+componentToStr(sub_comp));
+	comp.children.forEach(sub_comp => txtElse += '\t'+componentToStr(sub_comp, indexLoopName));
 	txtElse += '\t';
 	return txtElse;
 }
 
-function tagElseIfToStr(comp){
+function tagElseIfToStr(comp, indexLoopName){
 	var txtElseIf = '\t\n}else if('+contextToAlias(comp.attribs.condition)+'){\n';
-	comp.children.forEach(sub_comp => txtElseIf += '\t'+componentToStr(sub_comp));
+	comp.children.forEach(sub_comp => txtElseIf += '\t'+componentToStr(sub_comp, indexLoopName));
 	txtElseIf += '\t';
 	return txtElseIf;
 }
 
 
-function tagForToStr(comp){
+function tagForToStr(comp, indexLoopName){
 	var array_each = comp.attribs.each.split(" in ");
 	var sub_array_each = array_each[0].split(",");
 	var index_array = "$tmp_index_name_"+nextUID();
@@ -237,12 +237,12 @@ function tagForToStr(comp){
 	//renderIDOMHTML += '\t'+appendContext(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){\n';
 	
 	var txtFor = '\n\t'+contextToAlias(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){';
-	comp.children.forEach(sub_comp => txtFor += '\t'+componentToStr(sub_comp,index_array));
+	comp.children.forEach(sub_comp => txtFor += '\t'+componentToStr(sub_comp,index_array, indexLoopName));
 	txtFor += '\t});\n';
 	return txtFor;
 }
 
-function tagTextToStr(comp){
+function tagTextToStr(comp, indexLoopName){
 	var text = comp.data;
 	if(text && text.trim()){
 		var txtReplace = "-x-abc"+new Date().getTime()+"zxv-x-" ;
@@ -261,7 +261,7 @@ function tagContentToStr(comp){
 	return '\t\n_libfjs_mod_.default.content.call('+context_alias+');\n';
 }
 
-function tagRegisterForToStr(comp){
+function tagRegisterForToStr(comp, indexLoopName){
 	//console.log(comp);
 	var registerStr = '';
 	if(!comp.children.length){
@@ -292,7 +292,7 @@ function tagCommandToStr(comp){
 	return '';
 }
 
-function tagRouteToStr(comp){
+function tagRouteToStr(comp, indexLoopName){
 	var separateAttrsElement = separateAttribs(comp.attribs)
 	var mod_tmp_static_attr_str=objStaticAttrToStr(separateAttrsElement.static);
 
@@ -720,14 +720,14 @@ function resolveTagRequire(comp){
 
 	var tagobject = pathToAlias(fromstr);
 
-	if(comp.attribs.type && comp.attribs.type=="script"){			
+	if(comp.attribs.type && comp.attribs.type === "script"){			
 		return {
 			type:comp.attribs.type
 			,path:tagobject.url
 			,alias:tagobject.alias.replace(/-/g,"_")	
 		}			    		
 	}
-	if(comp.attribs.type && comp.attribs.type=="namespace"){			
+	if(comp.attribs.type && comp.attribs.type === "namespace"){			
 		return {
 			type:comp.attribs.type
 			,path:tagobject.url
@@ -744,7 +744,7 @@ function resolveTagRequire(comp){
 		
 }
 
-function skipConditionExtractor(comp){	
+function skipConditionExtractor(comp, indexLoopName){	
 	var skipcomp = {
 		type:"tag"
 		,name:"skip"
@@ -755,10 +755,10 @@ function skipConditionExtractor(comp){
 	skipcomp.children=comp.children;
 	delete comp.attribs["children"];
 	comp.children=[skipcomp];
-	return componentToStr(comp);
+	return componentToStr(comp, indexLoopName);
 }
 
-function ifConditionExtractor(comp){	
+function ifConditionExtractor(comp, indexLoopName){	
 	var ifcomp = {
 		type:"tag"
 		,name:"if"
@@ -766,7 +766,7 @@ function ifConditionExtractor(comp){
 	};
 	delete comp.attribs["if"];
 	ifcomp.children=[comp];	
-	return componentToStr(ifcomp);
+	return componentToStr(ifcomp, indexLoopName);
 }
 
 function forConditionExtractor(comp){	

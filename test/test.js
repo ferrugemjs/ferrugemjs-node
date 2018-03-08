@@ -205,13 +205,6 @@ var rawHtml
 		<div class="cls-2"></div>
 		<div></div>
 		<div class="cls-1"></div>
-		<ul>
-			<li each="item,subindx in this.itens">
-				<span class="especial-loop">
-					<p class="basic">\${item.name}</p>					
-				</span>
-			</li>
-		</ul>
 		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}">
 		</nyw:faster-comp>
 		<compose
@@ -222,6 +215,24 @@ var rawHtml
 			view:from="\${this.myview}"
 		>
 		</compose>
+		<ul>
+			<for each="item,subindxA in this.itens">
+				<li>
+					<span if="1 === 1" class="especial-loop">
+						<p class="basic">\${item.name}</p>					
+					</span>
+					<if condition="1 === 1">
+						<div data-test="if-123">ssss</div>
+					<elseif condition="2 === 1">
+						<div data-test="elseif-123">123123</div>
+					</elseif>	
+					<else>
+						<div data-test="else-321">zzzz</div>
+					</else>
+					</if>
+				</li>
+			</for>
+		</ul>
 	</div>
 </template>`;
 
