@@ -645,9 +645,11 @@ function tagTemplateToStr(comp,viewModel){
 		var subClazzName = '_clazz_sub_'+nextUID()+'_tmp';
 		templatePre += 'exports.default = (function(super_clazz){\n';
 		templatePre += '\t\tfunction '+subClazzName+'(){\n';
-		templatePre += '\t\t\tsuper_clazz.call(this);\n';
+		templatePre += '\t\t\tif(super_clazz.call){\n';
+		templatePre += '\t\t\t\tsuper_clazz.call(this);\n';
+		templatePre += '\t\t\t}\n';
 		templatePre += '\t\t};\n';
-		templatePre += '\t\t'+subClazzName+'.prototype = Object.create(super_clazz.prototype);\n';
+		templatePre += '\t\t'+subClazzName+'.prototype = Object.create(super_clazz.prototype || super_clazz);\n';
 		templatePre += '\t\t'+subClazzName+'.prototype.constructor = '+subClazzName+';\n';
 
 		templatePre += '\t\t'+subClazzName+'.prototype._$attrs$_ = '+JSON.stringify(firstElementAttrs)+';\n';
@@ -657,23 +659,18 @@ function tagTemplateToStr(comp,viewModel){
 		var childrenstr = '';
 		childrenstr += 'function('+context_alias+'){';
 
-
-
-
 		comp.children.filter( sub_comp => sub_comp.type=='tag' && ['require','style','script'].indexOf(sub_comp.name) == -1 )[0].children.forEach(sub_comp => childrenstr += '\t'+componentToStr(sub_comp));
-
 
 		childrenstr += '\t}';
 		
 		templatePre += childrenstr;
 		
 		templatePre += ';\n\t\treturn '+subClazzName+';\n';
-		
-		
+				
 		if(viewModel){
 			//tmp_mod_name
 			//templatePre += ' })('+tmp_mod_name+'[_'+tmp_mod_name+'_tmp]);';
-			templatePre += '\t})('+viewModelAlias+'[_'+viewModelAlias+'_tmp]);';
+			templatePre += '\t})('+viewModelAlias+'[_'+viewModelAlias+'_tmp] || '+viewModelAlias+');';
 		}else{
 			templatePre += '\t})(function(){})';
 		}		
