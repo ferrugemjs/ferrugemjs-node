@@ -261,25 +261,6 @@ function tagContentToStr(comp){
 	return '\t\n_libfjs_mod_.default.content.call('+context_alias+');\n';
 }
 
-function tagRegisterForToStr(comp, indexLoopName){
-	//console.log(comp);
-	var registerStr = '';
-	if(!comp.children.length){
-		return '';
-	}
-	for(var key in comp.attribs){
-		var keyIsoled = key;
-		//caso seja um event pattern tradicional
-		var eventParam = '';
-		if(key.indexOf(":") > 0){
-			keyIsoled = key.split(":")[0];
-			eventParam = '"'+comp.attribs[key]+'",';
-		}
-		var propCamelCase = slashToCamelCase(keyIsoled);
-		registerStr += '\t'+context_alias+'.'+propCamelCase+'('+eventParam+'function($param){'+ comp.children[0].data.replace(/@this\./gm,context_alias+'.') +'}.bind('+context_alias+'));';
-	}
-	return registerStr;
-}
 
 function tagCommandToStr(comp){
 	if(comp.children && comp.children.length){
@@ -290,6 +271,28 @@ function tagCommandToStr(comp){
 		};
 	}
 	return '';
+}
+
+function tagRefreshToStr(comp){
+	var attribs_srt = '{';
+	if(comp.attribs){
+		//attribs = comp.attribs;
+		console.dir(comp.attribs);
+		for(var key in comp.attribs){
+			var pattExpression = /^\$\{(.*)+\}$/g;
+			if(pattExpression.test(comp.attribs[key])){
+				attribs_srt += ',"'+slashToCamelCase(key)+'":'+comp.attribs[key].replace(pattExpression,(p1,p2) => {
+					return contextToAlias(p2);
+				});				
+			}else{
+				attribs_srt += ',"'+slashToCamelCase(key)+'":"'+comp.attribs[key]+'"';
+			}	
+
+			//attribs[slashToCamelCase(key)] = comp.attribs[key];
+		}
+	}
+	attribs_srt = '{'+attribs_srt.substring(2,attribs_srt.length)+'}';
+	return `\n\t${context_alias}.refresh(${attribs_srt});\n`;
 }
 
 function tagRouteToStr(comp, indexLoopName){
@@ -840,8 +843,8 @@ function componentToStr(comp, indexLoopName){
 	}
 
 
-	if(comp.name === 'register-for'){		
-		return tagRegisterForToStr(comp, indexLoopName);
+	if(comp.name === 'refresh'){		
+		return tagRefreshToStr(comp, indexLoopName);
 	}
 
 	if(comp.name.indexOf("-") > 0 && requireScriptList.indexOf(comp.name) > -1){

@@ -233,6 +233,7 @@ var rawHtml
 				</li>
 			</for>
 		</ul>
+		<refresh if="1 === 2" teste-basic="abracadabra" opbsbixo="1264" din="\${this.name}"/>
 	</div>
 </template>`;
 
