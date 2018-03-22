@@ -274,24 +274,21 @@ function tagCommandToStr(comp){
 }
 
 function tagRefreshToStr(comp){
-	var attribs_srt = '{';
+	var attribs_srt = '';
 	if(comp.attribs){
-		//attribs = comp.attribs;
-		console.dir(comp.attribs);
 		for(var key in comp.attribs){
 			var pattExpression = /^\$\{(.*)+\}$/g;
 			if(pattExpression.test(comp.attribs[key])){
 				attribs_srt += ',"'+slashToCamelCase(key)+'":'+comp.attribs[key].replace(pattExpression,(p1,p2) => {
-					return contextToAlias(p2);
+					return '('+contextToAlias(p2)+')';
 				});				
 			}else{
 				attribs_srt += ',"'+slashToCamelCase(key)+'":"'+comp.attribs[key]+'"';
 			}	
-
-			//attribs[slashToCamelCase(key)] = comp.attribs[key];
 		}
+		attribs_srt = attribs_srt.substring(1,attribs_srt.length)
 	}
-	attribs_srt = '{'+attribs_srt.substring(2,attribs_srt.length)+'}';
+	attribs_srt = '{'+attribs_srt+'}';
 	return `\n\t${context_alias}.refresh(${attribs_srt});\n`;
 }
 
