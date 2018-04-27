@@ -235,6 +235,10 @@ var rawHtml
 		</ul>
 		<refresh/>
 		<refresh if="1 === 2" teste-basic="abracadabra" opbsbixo="1264" din="\${this.name}"/>
+		<span>\${ this.hasus.shwo( {asss:'www'}) } \${ this.pitus }</span>
+		<span>\${ this.content({whsh:45},{ext:this.pirus}) }</span>
+		<span> faustius </span>
+		<span> fives {} </span>
 	</div>
 </template>`;
 

@@ -245,12 +245,20 @@ function tagForToStr(comp, indexLoopName){
 function tagTextToStr(comp, indexLoopName){
 	var text = comp.data;
 	if(text && text.trim()){
+		if(text.indexOf('${') === -1){
+		// have'nt interpolation
+			return '\t\n_idom.text("'+text+'");\t\n';
+		}
+		var strTmp = text.replace(/([^$])((\{)(.+?)(\}))/g, '$1#beg-brackets#$4#end-brackets#');
+
 		var txtReplace = "-x-abc"+new Date().getTime()+"zxv-x-" ;
 		//var regexReplace = new RegExp(txtReplace,'g');
-		var strFormated = text.replace(/\s/g,txtReplace).trim().replace(/\n/g,' ').replace(/\$\{([^}]*)\}/g,function($1,$2){  								
+		var strFormated = strTmp.replace(/\s/g,txtReplace).trim().replace(/\n/g,' ').replace(/\$\{([^}]*)\}/g,function($1,$2){  								
   			return '"+('+contextToAlias($2)+')+"';
 		});
 		strFormated = strFormated.replace(/\t/g,'').replace(new RegExp(txtReplace,'g')," ");
+		
+		strFormated = strFormated.replace(/#beg-brackets#/g,'{').replace(/#end-brackets#/g,'}');
 		var formated = '\t\n_idom.text("'+strFormated+'");\t\n';
 		return formated;
 	}
