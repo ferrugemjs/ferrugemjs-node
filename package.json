@@ -1,10 +1,10 @@
 {
   "name": "ferrugemjs-node",
-  "version": "0.27.3",
+  "version": "0.28.0",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
   "scripts": {
-    "w:test": "nodemon -w test/ -w parse/ test/test.js"
+    "watch": "nodemon -w test/ -w parse/ test/test.js"
   },
   "repository": {
     "type": "git",

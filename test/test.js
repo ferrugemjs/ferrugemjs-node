@@ -205,7 +205,6 @@ var rawHtml
 		<div class="cls-2"></div>
 		<div></div>
 		<div class="cls-1"></div>
-		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}">
 		</nyw:faster-comp>
 		<compose
 			each="item in this.itens"
@@ -239,6 +238,8 @@ var rawHtml
 		<span>\${ this.content({whsh:45},{ext:this.pirus}) }</span>
 		<span> faustius </span>
 		<span> fives {} </span>
+		<strong a:special-case xxts:other-power-magic="nothing" zywp:din-maic="\${this.powerRanger}">Mama haaaa!!!</strong>
+		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}">
 	</div>
 </template>`;
 

@@ -241,9 +241,7 @@ function tagForToStr(comp, indexLoopName){
 	txtFor += '\t});\n';
 	return txtFor;
 }
-
-function tagTextToStr(comp, indexLoopName){
-	var text = comp.data;
+function formatTextToStr(text){
 	if(text && text.trim()){
 		var strTmp = text;
 
@@ -256,8 +254,8 @@ function tagTextToStr(comp, indexLoopName){
 					.replace(new RegExp(strBlankLineReplace,'g')," ");
 
 		if(strTmp.indexOf('${') === -1){
-		// have'nt interpolation
-			return '\t\n_idom.text("'+strTmp+'");\t\n';
+			// have'nt interpolation
+			return strTmp;
 		}
 		strTmp = strTmp
 					.replace(/([^$])((\{)(.+?)(\}))/g, '$1#beg-brackets#$4#end-brackets#')
@@ -265,6 +263,37 @@ function tagTextToStr(comp, indexLoopName){
   						return '"+('+contextToAlias($2)+')+"';
 					})
 					.replace(/#beg-brackets#/g,'{').replace(/#end-brackets#/g,'}');
+		return strTmp;
+	}
+	return "";
+}
+function tagTextToStr(comp, indexLoopName){
+	let attrDirectives = [];
+	if(comp.parent && comp.parent.attribs){
+		let attrKeys = Object.keys(comp.parent.attribs);
+		//var directiveFindIndex = attrKeys.findIndex();
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1);
+		/*
+		if(directiveFindIndex){
+			console.log(attrKeys,directiveFindIndex);	
+		}
+		*/		
+	}	
+	let text = comp.data;
+	if(text && text.trim()){
+		let strTmp = formatTextToStr(text);
+		if(attrDirectives.length){
+			let tmpNodeAlias = 'executedNode_'+nextUID();
+			concatenedStr = '\t\nvar '+tmpNodeAlias+' = _idom.text("'+strTmp+'");\t\n';
+			attrDirectives.forEach(attr => {
+				var splited = attr.split(":");
+				var namespace = '_'+splited[0];
+				var directiveCamelCase = slashToCamelCase(splited[1]);
+				let attrVlw = '"'+encodeAndSetContext(comp.parent.attribs[attr])+'"';
+				concatenedStr += '\t\n' +namespace+'.'+directiveCamelCase+'('+tmpNodeAlias+( comp.parent.attribs[attr] ? ',' + attrVlw : '')+');\t\n';
+			});			
+			return concatenedStr;
+		}
 		return '\t\n_idom.text("'+strTmp+'");\t\n';
 	}
 	return "";
@@ -346,9 +375,10 @@ function tagCustomToStr(comp, indexLoopName){
 	var name = comp.name;
 
 	if(name.indexOf(":") > -1){
-		namespace = name.substring(0,name.indexOf(":"));
-		tagname = name.substring(name.indexOf(":")+1,name.length);
-		tagname_underscore = tagname.replace(/-/g,"_");
+		let tagname_splited = name.split(":");
+		namespace = tagname_splited[0];
+		tagname = tagname_splited[1];
+		tagname_underscore =  slashToCamelCase(tagname);// tagname.replace(/-/g,"_");
 		tagname_with_namespace = namespace+'.'+tagname_underscore;
 		tagname_constructor = '_'+tagname_with_namespace;
 	}else{
@@ -876,7 +906,7 @@ module.exports = function(rawHtml,config){
 	    if (error){
 	     	console.log(error)   
 	    }else{
-			dom.filter(elementDom=>elementDom.name == 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp,config.viewModel)));
+			dom.filter(elementDom => elementDom.name == 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp,config.viewModel)));
 			finalBuffer = buffer.join('');
 		}
 	});
