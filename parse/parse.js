@@ -276,7 +276,8 @@ function tagTextToStr(comp, indexLoopName){
 	if(comp.parent && comp.parent.attribs){
 		let attrKeys = Object.keys(comp.parent.attribs);
 		//var directiveFindIndex = attrKeys.findIndex();
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1);
+		console.log(requireNamespaces);
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
 		/*
 		if(directiveFindIndex){
 			console.log(attrKeys,directiveFindIndex);	
@@ -291,9 +292,6 @@ function tagTextToStr(comp, indexLoopName){
 			concatenedStr = '\t\nvar '+tmpNodeAlias+' = _idom.text("'+strTmp+'");\t\n';
 			attrDirectives.forEach(attr => {
 				var splited = attr.split(":");
-				if(requireNamespaces.indexOf(splited[0]) > -1){
-					// is valid !!!
-				}
 				var namespace = '_'+splited[0];
 				var directiveCamelCase = slashToCamelCase(splited[1]);
 				let attrVlw = '"'+encodeAndSetContext(comp.parent.attribs[attr])+'"';

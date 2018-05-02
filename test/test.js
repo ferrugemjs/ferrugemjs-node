@@ -27,7 +27,7 @@ var rawHtml
 	<require from="./test/tpl-c2 as tpl-c12" type="script"/>
 	<require from="./test/tpl-c3 as tpl-c13" type="namespace"/>
 	<require from="./test/a" type="namespace"/>
-	<require from="./test/ddd as d" type="namespace"/>
+	<require from="./test/ddd as xxts" type="namespace"/>
 	<require from="./test/style-a.css!"/>
 	<require from="css!./test/style-b.css"/>
 	<require from="./test/style-b.css"/>
