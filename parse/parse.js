@@ -4,6 +4,7 @@ var generate = require("nanoid/generate");
 var buffer = [];
 var context_alias = '$_this_$';
 var requireScriptList = [];
+var requireNamespaces = [];
 var parser_configs = {templateExtension:".html",viewModel:"testeViewModel"};
 
 function nextUID(){
@@ -19,8 +20,12 @@ function appendBuffer(txt){
 function flush () {
   buffer.length = 0;
   buffer = [];
+
   requireScriptList.length = 0;
   requireScriptList = [];
+
+  requireNamespaces.length = 0;
+  requireNamespaces = [];
 }
 
 function slashToCamelCase(str){
@@ -35,10 +40,9 @@ function slashToCamelCase(str){
 }
 
 function pathToAlias(p_resource_url){
-	var patt_alias = / as\W+(\w.+)/g;
 	var _aliasname;
 	var _trueurl;
-	if(patt_alias.test(p_resource_url)){
+	if(p_resource_url.indexOf(' as ') > -1){
 		var _urlsplit = p_resource_url.split(' as ');
 		_trueurl = _urlsplit[0];
 		_aliasname = _urlsplit[1];
@@ -287,6 +291,9 @@ function tagTextToStr(comp, indexLoopName){
 			concatenedStr = '\t\nvar '+tmpNodeAlias+' = _idom.text("'+strTmp+'");\t\n';
 			attrDirectives.forEach(attr => {
 				var splited = attr.split(":");
+				if(requireNamespaces.indexOf(splited[0]) > -1){
+					// is valid !!!
+				}
 				var namespace = '_'+splited[0];
 				var directiveCamelCase = slashToCamelCase(splited[1]);
 				let attrVlw = '"'+encodeAndSetContext(comp.parent.attribs[attr])+'"';
@@ -601,7 +608,7 @@ function tagTemplateToStr(comp,viewModel){
 	if(comp.children && comp.children.length){
 		var firstElementArray = comp
 							   .children
-							   .filter(sub_comp => sub_comp.type=='tag' && ['require','style','script','command'].indexOf(sub_comp.name) < 0)
+							   .filter(sub_comp => sub_comp.type === 'tag' && ['require','style','script','command'].indexOf(sub_comp.name) < 0)
 
 	 	var	firstElementAttrs = {name:'div'};
 
@@ -620,47 +627,49 @@ function tagTemplateToStr(comp,viewModel){
 			};
 			comp
 		.children
-		.filter(sub_comp => sub_comp.type=='tag' && sub_comp.name == 'require' && sub_comp.attribs["from"])
+		.filter(sub_comp => sub_comp.type === 'tag' && sub_comp.name === 'require' && sub_comp.attribs["from"])
 		.forEach(sub_comp => requiresComp.push(resolveTagRequire(sub_comp)));
 
 		var modAlias = requiresComp
-			.filter(item=>item.type!="style")
-			.sort(p=>p.path)
-			.map(req_comp=> req_comp.alias);
+			.filter(item => item.type !== "style")
+			.sort(p => p.path)
+			.map(req_comp => req_comp.alias);
 
 
 
 
 		var requiresPath = requiresComp		
-			.filter(item=>item.type!="style")	
-			.sort(p=>p.path)
-			.map(req_comp=> '"'+req_comp.path+'"');
+			.filter(item => item.type !== "style")	
+			.sort(p => p.path)
+			.map(req_comp => '"'+req_comp.path+'"');
 
 		var onlyRequiresStyles = requiresComp
-			.filter(item=>item.type=="style")
-			.map(req_comp=> '"'+req_comp.path+'"');	
+			.filter(item => item.type=="style")
+			.map(req_comp => '"'+req_comp.path+'"');	
 
 		//console.log(modAlias,requiresPath)	
 
 		requireScriptList = requiresComp
-										.filter(reqcomp=>reqcomp.type=="script")
-										.map(reqcomp=>reqcomp.alias.replace(/_/g,"-"));
+										.filter(reqcomp => reqcomp.type === "script")
+										.map(reqcomp => reqcomp.alias.replace(/_/g,"-"));
 		
+		requireNamespaces = requiresComp
+										.filter(reqcomp => reqcomp.type === "namespace")
+										.map(reqcomp => pathToAlias(reqcomp.path).alias);
+
 		templatePre += 'define(["exports","incremental-dom","ferrugemjs/component-factory"';
 
 		if(requiresPath.length){
 			templatePre += ',';
 		}
 
-		templatePre += 	
-			requiresPath.join();
+		templatePre += requiresPath.join();
 
 		if(onlyRequiresStyles.length){
 			templatePre += ',';
 		}			
 
-		templatePre += 	
-			onlyRequiresStyles.join();		
+		templatePre += onlyRequiresStyles.join();		
 
 		templatePre += '], function (exports,_idom,_libfjs_mod_';
 

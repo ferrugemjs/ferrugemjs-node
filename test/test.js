@@ -26,6 +26,8 @@ var rawHtml
 	<require from="./test/tpl-c as tpl-c1"/>
 	<require from="./test/tpl-c2 as tpl-c12" type="script"/>
 	<require from="./test/tpl-c3 as tpl-c13" type="namespace"/>
+	<require from="./test/a" type="namespace"/>
+	<require from="./test/ddd as d" type="namespace"/>
 	<require from="./test/style-a.css!"/>
 	<require from="css!./test/style-b.css"/>
 	<require from="./test/style-b.css"/>
@@ -238,8 +240,8 @@ var rawHtml
 		<span>\${ this.content({whsh:45},{ext:this.pirus}) }</span>
 		<span> faustius </span>
 		<span> fives {} </span>
+		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}"/>
 		<strong a:special-case xxts:other-power-magic="nothing" zywp:din-maic="\${this.powerRanger}">Mama haaaa!!!</strong>
-		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}">
 	</div>
 </template>`;
 
