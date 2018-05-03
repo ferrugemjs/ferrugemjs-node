@@ -3,6 +3,13 @@ var beautify = require('js-beautify').js_beautify;
 
 //<template view-model="ops">
 //<template no-view-model="true">
+
+console.reset = function () {
+  return process.stdout.write('\033c');
+}
+
+console.reset();
+
 var rawHtml 
 = 
 `<template no-model>

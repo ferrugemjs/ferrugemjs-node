@@ -275,14 +275,7 @@ function tagTextToStr(comp, indexLoopName){
 	let attrDirectives = [];
 	if(comp.parent && comp.parent.attribs){
 		let attrKeys = Object.keys(comp.parent.attribs);
-		//var directiveFindIndex = attrKeys.findIndex();
-		console.log(requireNamespaces);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
-		/*
-		if(directiveFindIndex){
-			console.log(attrKeys,directiveFindIndex);	
-		}
-		*/		
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);	
 	}	
 	let text = comp.data;
 	if(text && text.trim()){
@@ -606,7 +599,7 @@ function tagTemplateToStr(comp,viewModel){
 	if(comp.children && comp.children.length){
 		var firstElementArray = comp
 							   .children
-							   .filter(sub_comp => sub_comp.type === 'tag' && ['require','style','script','command'].indexOf(sub_comp.name) < 0)
+							   .filter(sub_comp => sub_comp.type === 'tag' && ['require','style','script','command'].indexOf(sub_comp.name) < 0);
 
 	 	var	firstElementAttrs = {name:'div'};
 
@@ -623,18 +616,33 @@ function tagTemplateToStr(comp,viewModel){
 				,static:flat_static_array 
 				,dinamic:objDinamicAttrToStr(separateAttrsFirstElement.dinamic,firstElementArray[0].name)
 			};
-			comp
-		.children
-		.filter(sub_comp => sub_comp.type === 'tag' && sub_comp.name === 'require' && sub_comp.attribs["from"])
-		.forEach(sub_comp => requiresComp.push(resolveTagRequire(sub_comp)));
+			
+		comp
+			.children
+			.filter(sub_comp => sub_comp.type === 'tag' && sub_comp.name === 'require' && sub_comp.attribs['from'])
+			.forEach(sub_comp => {
+				//console.log(`${resolveTagRequire(sub_comp).type} : ${sub_comp.attribs['type']} : ${sub_comp.attribs['from']} : ${resolveTagRequire(sub_comp).alias}`);
+				requiresComp.push(resolveTagRequire(sub_comp))
+			});
 
+		//console.log(modAlias,requiresPath)
+		/*	
+		template // "_"+tagobject.alias.replace(/-/g,"_")
+		script (acho que nao precisa) // .replace(/-/g,"_")
+		namespace  // "_"+tagobject.alias
+		*/
 		var modAlias = requiresComp
-			.filter(item => item.type !== "style")
-			.sort(p => p.path)
-			.map(req_comp => req_comp.alias);
+															.filter(item => item.type !== 'style')
+															.sort(p => p.path)
+															.map(req_comp => {
+																if(['template', 'script', 'namespace'].indexOf(req_comp.type) > -1){
+																	return '_'+req_comp.alias.replace(/-/g,'_');
+																}											
+																return req_comp.alias;																
+															});
 
 
-
+			//console.log(requiresComp);
 
 		var requiresPath = requiresComp		
 			.filter(item => item.type !== "style")	
@@ -642,18 +650,16 @@ function tagTemplateToStr(comp,viewModel){
 			.map(req_comp => '"'+req_comp.path+'"');
 
 		var onlyRequiresStyles = requiresComp
-			.filter(item => item.type=="style")
+			.filter(item => item.type === "style")
 			.map(req_comp => '"'+req_comp.path+'"');	
-
-		//console.log(modAlias,requiresPath)	
 
 		requireScriptList = requiresComp
 										.filter(reqcomp => reqcomp.type === "script")
-										.map(reqcomp => reqcomp.alias.replace(/_/g,"-"));
-		
+										.map(reqcomp => reqcomp.alias);
+
 		requireNamespaces = requiresComp
 										.filter(reqcomp => reqcomp.type === "namespace")
-										.map(reqcomp => pathToAlias(reqcomp.path).alias);
+										.map(reqcomp => reqcomp.alias);
 
 		templatePre += 'define(["exports","incremental-dom","ferrugemjs/component-factory"';
 
@@ -756,6 +762,22 @@ function tagStyleToStr(comp){
 }
 function resolveTagRequire(comp){	
 	var fromstr = comp.attribs["from"];	
+	var tagobject = pathToAlias(fromstr);
+
+	if(comp.attribs.type && comp.attribs.type === "script"){			
+		return {
+			type:comp.attribs.type
+			,path:tagobject.url
+			,alias:tagobject.alias
+		}
+	}
+	if(comp.attribs.type && comp.attribs.type === "namespace"){
+		return {
+			type: comp.attribs.type
+			,path:tagobject.url
+			,alias:tagobject.alias
+		}					    		
+	}
 	//suporte aos plugins mais conhecidos
 	if( /^(css|style)!/gm.test(fromstr) || /\.(sass|scss|styl|css|less)$/gm.test(fromstr) || /scss!?$/gm.test(fromstr) || /css!$/gm.test(fromstr) || fromstr.indexOf("style!") === 0){
 		return {
@@ -764,31 +786,11 @@ function resolveTagRequire(comp){
 			,alias:""
 		};
 	}
-
-	var tagobject = pathToAlias(fromstr);
-
-	if(comp.attribs.type && comp.attribs.type === "script"){			
-		return {
-			type:comp.attribs.type
-			,path:tagobject.url
-			,alias:tagobject.alias.replace(/-/g,"_")	
-		}			    		
-	}
-	if(comp.attribs.type && comp.attribs.type === "namespace"){			
-		return {
-			type:comp.attribs.type
-			,path:tagobject.url
-			,alias:"_"+tagobject.alias.replace(/-/g,"_")	
-		}					    		
-	}
-											
 	return {
-		type:'template'
-		,path:tagobject.url + parser_configs.templateExtension
-		,alias:"_"+tagobject.alias.replace(/-/g,"_")	
-	}		
-	
-		
+		type: 'template'
+		,path: tagobject.url + parser_configs.templateExtension
+		,alias: tagobject.alias
+	}
 }
 
 function skipConditionExtractor(comp, indexLoopName){	
@@ -913,7 +915,7 @@ module.exports = function(rawHtml,config){
 	    if (error){
 	     	console.log(error)   
 	    }else{
-			dom.filter(elementDom => elementDom.name == 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp,config.viewModel)));
+			dom.filter(elementDom => elementDom.name === 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp,config.viewModel)));
 			finalBuffer = buffer.join('');
 		}
 	});
