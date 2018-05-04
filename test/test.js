@@ -249,6 +249,8 @@ var rawHtml
 		<span> fives {} </span>
 		<nyw:faster-comp each="item in this.itens" teste="\${item.desc}"/>
 		<strong a:special-case xxts:other-power-magic="nothing" zywp:din-maic="\${this.powerRanger}">Mama haaaa!!!</strong>
+		<npm:xnoyoy-montoiya sw="\${this.pipe}" aaa:ww="sss" basic="wesww"/>
+		<xxts:ymah-ligitimus-comp-super/>
 	</div>
 </template>`;
 
