@@ -27,6 +27,18 @@ ferrugemjs_node('<template><div>test</div></template>',<<options>>)
 	}
 ```
 
+### Usage as CLI
+
+#### usage
+
+```
+node_modules/.bin/ferrugemjs-node-cli --name <comp-name>  --tpl '<raw html>'
+```
+eg.
+```
+node_modules/.bin/ferrugemjs-node-cli --name teste  --tpl '<template><div></div></template>'
+```
+
 ## License
 
 [MIT License](http://en.wikipedia.org/wiki/MIT_License)
