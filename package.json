@@ -1,9 +1,9 @@
 {
   "name": "ferrugemjs-node",
-  "version": "0.31.1",
+  "version": "0.31.2",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
-  "bin" : { "ferrugemjs-node-cli" : "./cli/index.js" },
+  "bin" : { "ferrugemjs-node-cli" : "cli/index.js" },
   "scripts": {
     "watch": "nodemon -w test/ -w parse/ test/test.js"
   },
@@ -13,7 +13,8 @@
   },
   "files": [
     "index.js",
-    "parse/parse.js"
+    "parse/parse.js",
+    "cli/index.js"
   ],
   "keywords": [
     "IDOM",
