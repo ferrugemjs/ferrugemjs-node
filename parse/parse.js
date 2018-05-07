@@ -298,7 +298,7 @@ function tagTextToStr(comp, indexLoopName){
 }
 
 function tagContentToStr(comp){
-	return '\t\n_libfjs_mod_.componentFactory.content.call('+context_alias+');\n';
+	return '\t\n_libfjs_factory.default.content.call('+context_alias+');\n';
 }
 
 
@@ -427,7 +427,7 @@ function tagCustomToStr(comp, indexLoopName){
 	
 	//console.log('aqui----->',separate_attrs.dinamic)
 
-	basicTag = '\t\n(function(){\n var _$_inst_$_ = _libfjs_mod_.componentFactory.build({"classFactory":'+tagname_constructor+',"tag":"div","alias":"'+name+'","target":"","hostVars":'+_tmp_host_vars_+',"staticVars":'+_tmp_static_vars+'});\n';
+	basicTag = '\t\n(function(){\n var _$_inst_$_ = _libfjs_factory.default.build({"classFactory":'+tagname_constructor+',"tag":"div","alias":"'+name+'","target":"","hostVars":'+_tmp_host_vars_+',"staticVars":'+_tmp_static_vars+'});\n';
 	
 	if(comp.children && comp.children.length){
 		var hasRoute = comp.children.some(sub_comp=>sub_comp.name === "route");
@@ -436,13 +436,13 @@ function tagCustomToStr(comp, indexLoopName){
 			//console.log(comp.children[1].type);
 			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp, indexLoopName));
 		}else{		
-			basicTag += '\t\n_libfjs_mod_.componentFactory.content.call(_$_inst_$_,function(){\n';
+			basicTag += '\t\n_libfjs_factory.default.content.call(_$_inst_$_,function(){\n';
 			comp.children.forEach(sub_comp => basicTag += '\t'+componentToStr(sub_comp, indexLoopName));
 			basicTag += '\t\n});\n';
 		}
 	}
 
-	basicTag += '\t\n_libfjs_mod_.componentFactory.reDraw.call(_$_inst_$_);\n';
+	basicTag += '\t\n_libfjs_factory.default.reDraw.call(_$_inst_$_);\n';
 	basicTag += '\t\n})();\n';
 
 	return basicTag;
@@ -519,7 +519,7 @@ function tagComposeToStr(comp, indexLoopName){
 	var basicTag = '\n\t_idom.elementOpen("div",'+static_key+','+mod_tmp_static_attr_str_array_flat+','+mod_tmp_attr_str+');\n';
 	basicTag += '\n\t_idom.elementClose("div");\n';
 	
-	basicTag += '\n\t_libfjs_mod_.componentFactory.compose("'+tmp_view+'",'+static_key+','+attrToContext(separateAttrsElement.dinamic)+','+mod_tmp_static_attr_str+',function(){\n';
+	basicTag += '\n\t_libfjs_factory.default.compose("'+tmp_view+'",'+static_key+','+attrToContext(separateAttrsElement.dinamic)+','+mod_tmp_static_attr_str+',function(){\n';
 
 
 	if(comp.children){
@@ -683,7 +683,7 @@ function tagTemplateToStr(comp,viewModel){
 
 		templatePre += onlyRequiresStyles.join();		
 
-		templatePre += '], function (exports,_idom,_libfjs_mod_';
+		templatePre += '], function (exports,_idom,_libfjs_factory';
 
 		if(modAlias.length){
 			templatePre += ',';

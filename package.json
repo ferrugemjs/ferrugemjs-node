@@ -1,6 +1,6 @@
 {
   "name": "ferrugemjs-node",
-  "version": "0.31.0",
+  "version": "0.31.1",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
   "bin" : { "ferrugemjs-node-cli" : "./cli/index.js" },
