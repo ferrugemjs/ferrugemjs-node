@@ -94,6 +94,8 @@ function adjustEvents(key, value) {
 		argslist = '(' + context_alias + ',' + argslist;
 		value = value.substring(0, argsInitIndex);
 	}
+	value = ' typeof '+ value + ' !== \'function\' ? function(){ console.warn(\'Method "this.' + value.split('.')[1] + '" used in "'+key+'" event not exist!\') } : ' + value;
+	// console.log( value);
 	value = '${' + value + '.bind' + argslist + '}';
 	return {
 		key: key

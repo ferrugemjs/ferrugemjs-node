@@ -251,7 +251,7 @@ var rawHtml
 		<strong a:special-case xxts:other-power-magic="nothing" zywp:din-maic="\${this.powerRanger}">Mama haaaa!!!</strong>
 		<npm:xnoyoy-montoiya sw="\${this.pipe}" aaa:ww="sss" basic="wesww"/>
 		<xxts:ymah-ligitimus-comp-super/>
-		<input a:special-case type="text"/>
+		<input a:special-case type="text" click.trigger="this.test123"/>
 	</div>
 </template>`;
 
