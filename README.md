@@ -23,7 +23,8 @@ ferrugemjs_node('<template><div>test</div></template>',<<options>>)
 
 ```js	
 	{
-		templateExtension:".html"
+		templateExtension: ".html",
+		env: "production" // default is "development"
 	}
 ```
 

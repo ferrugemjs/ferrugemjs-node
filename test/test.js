@@ -259,7 +259,7 @@ var rawHtml
 console.log(
 
 	//beautify(
-	fjsparse(rawHtml,{viewModel:'test-comp'})
+	fjsparse(rawHtml,{viewModel: 'test-comp', env: 'production'})
 	//, { indent_size: 4 }) 
 
 )
