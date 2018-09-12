@@ -610,7 +610,7 @@ function tagBasicToStr(comp, indexLoopName) {
 	return basicTag;
 }
 
-function tagTemplateToStr(comp, viewModel) {
+function tagTemplateToStr(comp, viewModel, resourcePath) {
 	//console.log(comp.type,comp.name,viewModel);
 	var stylesStr = "";
 	var templatePre = "";
@@ -646,6 +646,10 @@ function tagTemplateToStr(comp, viewModel) {
 
 			var separateAttrsFirstElement = separateAttribs(firstElementArray[0].attribs)
 			var flat_static_array = [];
+			if(parser_configs.env === 'development' && resourcePath){
+				flat_static_array.push('fjs-mode',parser_configs.env);
+				flat_static_array.push('fjs-resource-path',resourcePath);
+			}
 			for (key in separateAttrsFirstElement.static) {
 				flat_static_array.push(key, separateAttrsFirstElement.static[key])
 			}
@@ -954,7 +958,7 @@ module.exports = function (rawHtml, config) {
 		if (error) {
 			console.log(error)
 		} else {
-			dom.filter(elementDom => elementDom.name === 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp, config.viewModel)));
+			dom.filter(elementDom => elementDom.name === 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp, config.viewModel, config.resourcePath)));
 			finalBuffer = buffer.join('');
 		}
 	});
