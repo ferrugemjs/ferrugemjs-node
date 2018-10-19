@@ -346,7 +346,7 @@ function tagRouteToStr(comp, indexLoopName) {
 		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
 	}
 
-	var routeStr = '\n_$_inst_$_.routes.push(' + JSON.stringify(attrsCamel) + ');\n';
+	var routeStr = '\n_$_inst_$_.pushRoute(' + JSON.stringify(attrsCamel) + ');\n';
 	return routeStr;
 }
 
