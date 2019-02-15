@@ -640,25 +640,13 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			.children
 			.filter(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script', 'command'].indexOf(sub_comp.name) < 0);
 
-		var firstElementAttrs = { name: 'div' };
-
 		if (firstElementArray.length) {
 
 			var separateAttrsFirstElement = separateAttribs(firstElementArray[0].attribs)
 			var flat_static_array = [];
-			if(parser_configs.env === 'development' && resourcePath){
-				flat_static_array.push('fjs-mode',parser_configs.env);
-				flat_static_array.push('fjs-resource-path',resourcePath);
-			}
 			for (key in separateAttrsFirstElement.static) {
 				flat_static_array.push(key, separateAttrsFirstElement.static[key])
 			}
-
-			firstElementAttrs = {
-				name: firstElementArray[0].name
-				, static: flat_static_array
-				, dinamic: objDinamicAttrToStr(separateAttrsFirstElement.dinamic, firstElementArray[0].name)
-			};
 
 			comp
 				.children
@@ -704,7 +692,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => reqcomp.alias);
 
-			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory"';
+			templatePre += 'define(["exports","incremental-dom"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -718,7 +706,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			templatePre += onlyRequiresStyles.join();
 
-			templatePre += '], function (exports,_idom,_libfjs_factory';
+			templatePre += '], function (exports,_idom';
 
 			if (modAlias.length) {
 				templatePre += ',';
@@ -751,15 +739,30 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			templatePre += '\t\t' + subClazzName + '.prototype = Object.create(super_clazz.prototype || super_clazz);\n';
 			templatePre += '\t\t' + subClazzName + '.prototype.constructor = ' + subClazzName + ';\n';
 
-			templatePre += '\t\t' + subClazzName + '.prototype._$attrs$_ = ' + JSON.stringify(firstElementAttrs) + ';\n';
-
 			templatePre += '\t\t' + subClazzName + '.prototype.render = ';
 
+			var subcomp = comp.children.filter(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) === -1)[0];
+
 			var childrenstr = '';
-			childrenstr += 'function(' + context_alias + '){';
+			childrenstr += 'function(config_props, inst_props){';
 
-			comp.children.filter(sub_comp => sub_comp.type == 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) == -1)[0].children.forEach(sub_comp => childrenstr += '\t' + componentToStr(sub_comp));
+			var dev_props = {"is": "${config_props.is}", "id": "${config_props.key_id}","key:id":"${config_props.key_id}"};
 
+			if(parser_configs.env === 'development' && resourcePath){
+				dev_props = Object.assign({},dev_props,{
+					"fjs-mode": parser_configs.env,
+					"fjs-resource-path": resourcePath
+				});
+			}
+
+			subcomp.attribs = Object.assign({}, subcomp.attribs || {}, dev_props);
+
+			childrenstr += componentToStr(subcomp);
+			
+			//subcomp.children.forEach(child => childrenstr += '\t\t' + componentToStr(child));
+
+			//childrenstr += '_idom.elementClose("'+subcomp.name+'");';
+			
 			childrenstr += '\t}';
 
 			templatePre += childrenstr;

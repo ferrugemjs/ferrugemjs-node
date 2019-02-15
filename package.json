@@ -3,7 +3,9 @@
   "version": "0.35.1",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
-  "bin" : { "ferrugemjs-node-cli" : "cli/index.js" },
+  "bin": {
+    "ferrugemjs-node-cli": "cli/index.js"
+  },
   "scripts": {
     "watch": "nodemon -w test/ -w parse/ test/test.js"
   },
