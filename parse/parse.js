@@ -419,7 +419,7 @@ function tagCustomToStr(comp, indexLoopName) {
 	// #2
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	var basicTag = `_libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"},null,function(){${content}}.bind(${context_alias}));`;
+	var basicTag = `_libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias})).$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
 
 	if (hasRoute) {
 		//console.log(comp.children[1].type);
