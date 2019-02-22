@@ -246,7 +246,7 @@ function tagForToStr(comp, indexLoopName) {
 
 	var txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
 	comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
-	txtFor += '\t});\n';
+	txtFor += `\t}.bind(${context_alias}));\n`;
 	return txtFor;
 }
 function formatTextToStr(text) {
@@ -983,4 +983,3 @@ module.exports = function (rawHtml, config) {
 	return finalBuffer;
 
 }
-
