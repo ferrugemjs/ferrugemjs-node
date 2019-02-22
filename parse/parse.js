@@ -322,7 +322,7 @@ function tagScriptConstructorToStr(comp) {
 		var text = comp.children[0].data;
 		if (text && text.trim()) {
 			//return text.replace(/@this\./gm,context_alias+'.');
-			return `\n\t${text.trim()}.call(${context_alias},props);\n`;
+			return `${text.trim()}`;
 		};
 	}
 	return '';
@@ -743,7 +743,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			//#1
 			templatePre += '\t\t' + subClazzName + '.prototype.$render = ';
 
-			var subcomp = comp.children.filter(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) === -1)[0];
+			var subcomp = comp.children.find(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) === -1);
 
 			var childrenstr = '';
 			childrenstr += 'function(config_props){';
@@ -778,7 +778,13 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			if (viewModel) {
 				templatePre += '\t})(' + viewModelAlias + '[_' + viewModelAlias + '_tmp] || ' + viewModelAlias + ');';
 			} else {
-				templatePre += '\t})(function(){})';
+				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['constructor']);
+				let initStr = `function(){}`;
+				if(childConstructor){
+					//console.log('child-constructor:',childConstructor.attribs.init);
+					initStr = tagScriptConstructorToStr(childConstructor, 0); 
+				}
+				templatePre += `\t})(${initStr})`;
 			}
 
 			templatePre += '\n});';
@@ -937,8 +943,8 @@ function componentToStr(comp, indexLoopName) {
 		return tagContentToStr(comp, indexLoopName);
 	}
 
-	if (comp.name === 'script'  && comp.attribs && comp.attribs['type'] === 'constructor') {
-		return tagScriptConstructorToStr(comp, indexLoopName);
+	if (comp.name === 'script' && comp.attribs && comp.attribs['constructor']) {
+		return '';
 	}
 
 	if (comp.name === 'script') {
