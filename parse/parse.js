@@ -317,6 +317,17 @@ function tagCommandToStr(comp) {
 	return '';
 }
 
+function tagScriptConstructorToStr(comp) {
+	if (comp.children && comp.children.length) {
+		var text = comp.children[0].data;
+		if (text && text.trim()) {
+			//return text.replace(/@this\./gm,context_alias+'.');
+			return `\n\t${text.trim()}.call(${context_alias},props);\n`;
+		};
+	}
+	return '';
+}
+
 function tagRouteToStr(comp, indexLoopName) {
 	var separateAttrsElement = separateAttribs(comp.attribs)
 	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
@@ -926,6 +937,10 @@ function componentToStr(comp, indexLoopName) {
 		return tagContentToStr(comp, indexLoopName);
 	}
 
+	if (comp.name === 'script'  && comp.attribs && comp.attribs['type'] === 'constructor') {
+		return tagScriptConstructorToStr(comp, indexLoopName);
+	}
+
 	if (comp.name === 'script') {
 		return tagCommandToStr(comp, indexLoopName);
 	}
@@ -962,5 +977,4 @@ module.exports = function (rawHtml, config) {
 	return finalBuffer;
 
 }
-
 
