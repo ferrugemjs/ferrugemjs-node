@@ -2,7 +2,7 @@ var htmlparser = require("htmlparser2");
 var generate = require("nanoid/generate");
 
 var buffer = [];
-var context_alias = '$_this_$';
+var context_alias = 'this';
 var requireScriptList = [];
 var requireNamespaces = [];
 var parser_configs = { templateExtension: ".html", viewModel: "testeViewModel", env: "development" };
@@ -94,8 +94,8 @@ function adjustEvents(key, value) {
 		argslist = '(' + context_alias + ',' + argslist;
 		value = value.substring(0, argsInitIndex);
 	}
-	if(parser_configs.env === 'development'){
-		value = ' typeof '+ value + ' !== \'function\' ? function(){ console.warn(\'Method "this.' + value.split('.')[1] + '" used in "'+key+'" event not exist!\') } : ' + value;
+	if (parser_configs.env === 'development') {
+		value = ' typeof ' + value + ' !== \'function\' ? function(){ console.warn(\'Method "this.' + value.split('.')[1] + '" used in "' + key + '" event not exist!\') } : ' + value;
 	}
 	// console.log( value);
 	value = '${' + value + '.bind' + argslist + '}';
@@ -157,14 +157,14 @@ function objDinamicAttrToStr(attribs, tagName, type) {
 			obj_array.push(evtstr);
 			//console.log(attribs.type);
 			var attr_pure = attribs[key].replace(context_alias + ".", "");
-			if (tagName == "select") {
-				obj_array.push('#{#function($evt){\nvar tmp_$target$_evt=$evt.target;\n' + context_alias + '.refresh({"' + (attr_pure) + '":tmp_$target$_evt.options[tmp_$target$_evt.selectedIndex].value});\n}#}#');
-			} else if (type == "checkbox" || type == "radio") {
+			if (tagName === "select") {
+				obj_array.push('#{#function($evt){\nvar tmp_$target$_evt=$evt.target;\n' + context_alias + '.' + (attr_pure) + ' = tmp_$target$_evt.options[tmp_$target$_evt.selectedIndex].value;\n}.bind(' + context_alias + ')#}#');
+			} else if (type === "checkbox" || type === "radio") {
 				//console.log( attribs[key]);							
-				obj_array.push('#{#function($evt){\n' + context_alias + '.refresh({"' + (attr_pure) + '":$evt.target.checked?$evt.target.value:null})\n}\n#}#');
+				obj_array.push('#{#function($evt){\n' + context_alias + '.' + (attr_pure) + ' = $evt.target.checked?$evt.target.value:null\n}.bind(' + context_alias + ')\n#}#');
 			} else {
 				//console.log( attribs[key]);							
-				obj_array.push('#{#function($evt){\n' + context_alias + '.refresh({"' + (attr_pure) + '":$evt.target.value})\n}\n#}#');
+				obj_array.push('#{#function($evt){\n' + context_alias + '.' + (attr_pure) + ' = $evt.target.value\n}.bind(' + context_alias + ')\n#}#');
 			}
 			//console.log(attribs[key])								
 		} else if (key.indexOf(".") > 0) {
@@ -234,19 +234,26 @@ function tagElseIfToStr(comp, indexLoopName) {
 
 
 function tagForToStr(comp, indexLoopName) {
-	var array_each = comp.attribs.each.split(" in ");
+    let eachTxt = comp.attribs.each || '';
+    const isFor = eachTxt.indexOf(';') > -1;
+	let index_array = "$tmp_index_name_" + nextUID();
+
+    if(isFor){
+	    var txtFor = `\n\tfor(${comp.attribs.each}){`;
+	    comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
+	    txtFor += `\t};\n`;
+        return txtFor;
+    }
+
+	var array_each = eachTxt.split(" in ");
 	var sub_array_each = array_each[0].split(",");
-	var index_array = "$tmp_index_name_" + nextUID();
 	if (sub_array_each.length > 1) {
 		index_array = sub_array_each[1];
-		//lasts_index_alias.push(sub_array_each[1]);
 	}
-	//lasts_item_alias.push(sub_array_each[0]);
-	//renderIDOMHTML += '\t'+appendContext(array_each[1])+'.forEach(function('+sub_array_each[0]+','+index_array+'){\n';
-
 	var txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
 	comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
-	txtFor += '\t});\n';
+	txtFor += `\t}.bind(${context_alias}));\n`;
+
 	return txtFor;
 }
 function formatTextToStr(text) {
@@ -302,7 +309,7 @@ function tagTextToStr(comp, indexLoopName) {
 }
 
 function tagContentToStr(comp) {
-	return '\t\n_libfjs_factory.default.content.call(' + context_alias + ');\n';
+	return `\t\n${context_alias}.$content();\n`;
 }
 
 
@@ -317,23 +324,15 @@ function tagCommandToStr(comp) {
 	return '';
 }
 
-function tagRefreshToStr(comp) {
-	var attribs_srt = '';
-	if (comp.attribs) {
-		for (var key in comp.attribs) {
-			var pattExpression = /^\$\{(.*)+\}$/g;
-			if (pattExpression.test(comp.attribs[key])) {
-				attribs_srt += ',"' + slashToCamelCase(key) + '":' + comp.attribs[key].replace(pattExpression, (p1, p2) => {
-					return '(' + contextToAlias(p2) + ')';
-				});
-			} else {
-				attribs_srt += ',"' + slashToCamelCase(key) + '":"' + comp.attribs[key] + '"';
-			}
-		}
-		attribs_srt = attribs_srt.substring(1, attribs_srt.length)
+function tagScriptConstructorToStr(comp) {
+	if (comp.children && comp.children.length) {
+		var text = comp.children[0].data;
+		if (text && text.trim()) {
+			//return text.replace(/@this\./gm,context_alias+'.');
+			return `${text.trim()}`;
+		};
 	}
-	attribs_srt = '{' + attribs_srt + '}';
-	return `\n\t${context_alias}.refresh(${attribs_srt});\n`;
+	return '';
 }
 
 function tagRouteToStr(comp, indexLoopName) {
@@ -420,35 +419,30 @@ function tagCustomToStr(comp, indexLoopName) {
 		}
 	}
 
+	const hasContent = comp.children && comp.children.length;
+	let hasRoute = false;
+	let content = '';
+	if (hasContent) {
+		hasRoute = comp.children.some(sub_comp => sub_comp.name === "route");
+		if (!hasRoute) {
+			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, indexLoopName));
+		}
+	}
 	var _tmp_host_vars_ = attrToContext(separate_attrs.dinamic);
 	var _tmp_static_vars = JSON.stringify(separate_attrs.static);
 
 	if (!alreadyHasKeyId && indexLoopName) {
-		//static_key
-		//indexLoopName
 		_tmp_static_vars = _tmp_static_vars.replace(static_key, static_key + '_"+' + indexLoopName + '+"');
 	}
+	// #2
+	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	//console.log('aqui----->',separate_attrs.dinamic)
+	var basicTag = `_libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias})).$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
 
-	basicTag = '\t\n(function(){\n var _$_inst_$_ = _libfjs_factory.default.build({"classFactory":' + tagname_constructor + ',"tag":"div","alias":"' + name + '","target":"","hostVars":' + _tmp_host_vars_ + ',"staticVars":' + _tmp_static_vars + '});\n';
-
-	if (comp.children && comp.children.length) {
-		var hasRoute = comp.children.some(sub_comp => sub_comp.name === "route");
-		//console.log('has route',hasRoute)
-		if (hasRoute) {
-			//console.log(comp.children[1].type);
-			comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
-		} else {
-			basicTag += '\t\n_libfjs_factory.default.content.call(_$_inst_$_,function(){\n';
-			comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
-			basicTag += '\t\n});\n';
-		}
+	if (hasRoute) {
+		//console.log(comp.children[1].type);
+		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
 	}
-
-	basicTag += '\t\n_libfjs_factory.default.reDraw.call(_$_inst_$_);\n';
-	basicTag += '\t\n})();\n';
-
 	return basicTag;
 }
 
@@ -520,17 +514,32 @@ function tagComposeToStr(comp, indexLoopName) {
 		static_key = tmpReplace;
 	}
 
-	var basicTag = '\n\t_idom.elementOpen("div",' + static_key + ',' + mod_tmp_static_attr_str_array_flat + ',' + mod_tmp_attr_str + ');\n';
-	basicTag += '\n\t_idom.elementClose("div");\n';
+	var _tmp_host_vars_ = attrToContext(separateAttrsElement.dinamic);
+	var _tmp_static_vars = JSON.stringify(separateAttrsElement.static);
 
-	basicTag += '\n\t_libfjs_factory.default.compose("' + tmp_view + '",' + static_key + ',' + attrToContext(separateAttrsElement.dinamic) + ',' + mod_tmp_static_attr_str + ',function(){\n';
+	if (!alreadyHasKeyId && indexLoopName) {
+		_tmp_static_vars = _tmp_static_vars.replace(static_key, static_key + '_"+' + indexLoopName + '+"');
+	}
+	// #2
+	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
+
+	var req_id = `_$req_${nextUID()}`;
+	var sub_item_id = `_subitemid_${nextUID()}`;
+	var basicTag = `\n\tvar ${req_id} = _idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
+
+	basicTag += `require(['${tmp_view}${parser_configs.templateExtension}'], function(_mod){`;
+	basicTag += `\n\t_libfjs_factory.default(_mod.default,${attrs_merged},{is:"${comp.attribs["is"]}", key_id:"${sub_item_id}"},${req_id});\n`;
+	basicTag += `});`
+	//basicTag += '\n\t_idom.elementClose("div");\n';
+
+	//basicTag += '\n\t_libfjs_factory.default.compose("' + tmp_view + '",' + static_key + ',' + attrToContext(separateAttrsElement.dinamic) + ',' + mod_tmp_static_attr_str + ',function(){\n';
 
 
 	if (comp.children) {
 		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
 	}
 
-	basicTag += '\n\t});\n';
+	//basicTag += '\n\t});\n';
 
 
 
@@ -588,7 +597,7 @@ function tagBasicToStr(comp, indexLoopName) {
 
 	let tmpNodeAlias = 'executedNode_' + nextUID();
 	if (attrDirectives.length) {
-		basicTag = '\t\nvar ' + tmpNodeAlias + ' ='+basicTag+'\t\n';
+		basicTag = '\t\nvar ' + tmpNodeAlias + ' =' + basicTag + '\t\n';
 	}
 
 
@@ -640,25 +649,13 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			.children
 			.filter(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script', 'command'].indexOf(sub_comp.name) < 0);
 
-		var firstElementAttrs = { name: 'div' };
-
 		if (firstElementArray.length) {
 
 			var separateAttrsFirstElement = separateAttribs(firstElementArray[0].attribs)
 			var flat_static_array = [];
-			if(parser_configs.env === 'development' && resourcePath){
-				flat_static_array.push('fjs-mode',parser_configs.env);
-				flat_static_array.push('fjs-resource-path',resourcePath);
-			}
 			for (key in separateAttrsFirstElement.static) {
 				flat_static_array.push(key, separateAttrsFirstElement.static[key])
 			}
-
-			firstElementAttrs = {
-				name: firstElementArray[0].name
-				, static: flat_static_array
-				, dinamic: objDinamicAttrToStr(separateAttrsFirstElement.dinamic, firstElementArray[0].name)
-			};
 
 			comp
 				.children
@@ -743,22 +740,41 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			var subClazzName = '_clazz_sub_' + nextUID() + '_tmp';
 			templatePre += 'exports.default = (function(super_clazz){\n';
-			templatePre += '\t\tfunction ' + subClazzName + '(){\n';
+			templatePre += '\t\tfunction ' + subClazzName + '(props){\n';
 			templatePre += '\t\t\tif(super_clazz.call){\n';
-			templatePre += '\t\t\t\tsuper_clazz.call(this);\n';
+			templatePre += '\t\t\t\tsuper_clazz.call(this, props);\n';
 			templatePre += '\t\t\t}\n';
 			templatePre += '\t\t};\n';
 			templatePre += '\t\t' + subClazzName + '.prototype = Object.create(super_clazz.prototype || super_clazz);\n';
 			templatePre += '\t\t' + subClazzName + '.prototype.constructor = ' + subClazzName + ';\n';
+			//#1
+			templatePre += '\t\t' + subClazzName + '.prototype.$render = ';
 
-			templatePre += '\t\t' + subClazzName + '.prototype._$attrs$_ = ' + JSON.stringify(firstElementAttrs) + ';\n';
-
-			templatePre += '\t\t' + subClazzName + '.prototype.render = ';
+			var subcomp = comp.children.find(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) === -1);
 
 			var childrenstr = '';
-			childrenstr += 'function(' + context_alias + '){';
+			childrenstr += 'function(config_props){';
 
-			comp.children.filter(sub_comp => sub_comp.type == 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) == -1)[0].children.forEach(sub_comp => childrenstr += '\t' + componentToStr(sub_comp));
+			var dev_props = { "is": "${config_props.is}", "id": "${config_props.key_id}", "key:id": "${config_props.key_id}" };
+
+			if (parser_configs.env === 'development' && resourcePath) {
+				dev_props = Object.assign({}, dev_props, {
+					"fjs-mode": parser_configs.env,
+					"fjs-resource-path": resourcePath
+				});
+			}
+
+			subcomp.attribs = Object.assign({}, subcomp.attribs || {}, dev_props);
+
+			let subcompSterie = Object.assign({}, subcomp, { children: [] });
+			subcompSterieStr = componentToStr(subcompSterie).replace(`_idom.elementClose("${subcompSterie.name}");`, '');
+			subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
+
+			subcomp.children.forEach(child => subcompSterieStr += '\t\t' + componentToStr(child));
+
+			childrenstr += subcompSterieStr;
+
+			childrenstr += `if(!config_props.loaded){_idom.elementClose("${subcomp.name}");};`;
 
 			childrenstr += '\t}';
 
@@ -767,11 +783,15 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			templatePre += ';\n\t\treturn ' + subClazzName + ';\n';
 
 			if (viewModel) {
-				//tmp_mod_name
-				//templatePre += ' })('+tmp_mod_name+'[_'+tmp_mod_name+'_tmp]);';
 				templatePre += '\t})(' + viewModelAlias + '[_' + viewModelAlias + '_tmp] || ' + viewModelAlias + ');';
 			} else {
-				templatePre += '\t})(function(){})';
+				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['constructor']);
+				let initStr = `function(){}`;
+				if(childConstructor){
+					//console.log('child-constructor:',childConstructor.attribs.init);
+					initStr = tagScriptConstructorToStr(childConstructor, 0); 
+				}
+				templatePre += `\t})(${initStr})`;
 			}
 
 			templatePre += '\n});';
@@ -930,13 +950,12 @@ function componentToStr(comp, indexLoopName) {
 		return tagContentToStr(comp, indexLoopName);
 	}
 
-	if (comp.name === 'script') {
-		return tagCommandToStr(comp, indexLoopName);
+	if (comp.name === 'script' && comp.attribs && comp.attribs['constructor']) {
+		return '';
 	}
 
-
-	if (comp.name === 'refresh') {
-		return tagRefreshToStr(comp, indexLoopName);
+	if (comp.name === 'script') {
+		return tagCommandToStr(comp, indexLoopName);
 	}
 
 	if (comp.name.indexOf("-") > 0 && requireScriptList.indexOf(comp.name) > -1) {
@@ -971,4 +990,3 @@ module.exports = function (rawHtml, config) {
 	return finalBuffer;
 
 }
-
