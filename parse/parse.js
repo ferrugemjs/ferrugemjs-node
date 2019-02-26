@@ -243,7 +243,7 @@ function tagForToStr(comp, indexLoopName) {
         var array_each = eachTxt.split(";");
         array_each[0] = `${array_each[0]},${index_array} = 0`;
         array_each[2] = `${array_each[2]},${index_array}++`;
-        eachTxt = array_each.join();
+        eachTxt = array_each.join(";");
 	    txtFor = `\n\tfor(${eachTxt}){`;
 	    comp.children.forEach(sub_comp => txtFor += `\t${componentToStr(sub_comp, index_array, indexLoopName)}`);
 	    txtFor += `\t};\n`;
