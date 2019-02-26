@@ -236,22 +236,27 @@ function tagElseIfToStr(comp, indexLoopName) {
 function tagForToStr(comp, indexLoopName) {
     let eachTxt = comp.attribs.each || '';
     const isFor = eachTxt.indexOf(';') > -1;
-	
+	let index_array = "$tmp_index_name_" + nextUID();
+    let txtFor = '';
 
     if(isFor){
-	    var txtFor = `\n\tfor(${comp.attribs.each}){`;
-	    comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, indexLoopName));
+        var array_each = eachTxt.split(";");
+        array_each[0] = `${array_each[0]},${index_array} = 0`;
+        array_each[2] = `${array_each[2]},${index_array}++`;
+        eachTxt = array_each.join();
+	    txtFor = `\n\tfor(${eachTxt}){`;
+	    comp.children.forEach(sub_comp => txtFor += `\t${componentToStr(sub_comp, index_array, indexLoopName)}`);
 	    txtFor += `\t};\n`;
         return txtFor;
     }
 
-    let index_array = "$tmp_index_name_" + nextUID();
+    
 	var array_each = eachTxt.split(" in ");
 	var sub_array_each = array_each[0].split(",");
 	if (sub_array_each.length > 1) {
 		index_array = sub_array_each[1];
 	}
-	var txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
+	txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
 	comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
 	txtFor += `\t}.bind(${context_alias}));\n`;
 

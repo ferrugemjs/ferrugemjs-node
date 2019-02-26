@@ -24,8 +24,8 @@ var rawHtml
             <div>\${item}</div>
         </for>
         <ul>
-            <li each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</li>
-            <li each="item2 in this.itens" data-index="\${ln}">\${ln}</li>
+            <li each="item2 in this.itens">\${ln}</li>
+            <div-elem each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</div-elem>
         </ul>
 	</div>
 </template>`;
