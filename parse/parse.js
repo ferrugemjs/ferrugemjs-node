@@ -236,15 +236,16 @@ function tagElseIfToStr(comp, indexLoopName) {
 function tagForToStr(comp, indexLoopName) {
     let eachTxt = comp.attribs.each || '';
     const isFor = eachTxt.indexOf(';') > -1;
-	let index_array = "$tmp_index_name_" + nextUID();
+	
 
     if(isFor){
 	    var txtFor = `\n\tfor(${comp.attribs.each}){`;
-	    comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
+	    comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, indexLoopName));
 	    txtFor += `\t};\n`;
         return txtFor;
     }
 
+    let index_array = "$tmp_index_name_" + nextUID();
 	var array_each = eachTxt.split(" in ");
 	var sub_array_each = array_each[0].split(",");
 	if (sub_array_each.length > 1) {

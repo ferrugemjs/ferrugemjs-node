@@ -20,12 +20,12 @@ var rawHtml
                 this.itens = [];
             }
         </script>
-        <for each="item, $idx in this.itens">
+        <for each="item,$idx in this.itens">
             <div>\${item}</div>
         </for>
         <ul>
             <li each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</li>
-            <li each="item2, in this.itens2" data-index="\${ln}">\${ln}</li>
+            <li each="item2 in this.itens" data-index="\${ln}">\${ln}</li>
         </ul>
 	</div>
 </template>`;
