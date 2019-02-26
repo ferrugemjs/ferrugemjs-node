@@ -1,6 +1,6 @@
 {
   "name": "ferrugemjs-node",
-  "version": "0.35.1",
+  "version": "2.0.0",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
   "bin": {
