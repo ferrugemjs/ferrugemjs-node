@@ -343,7 +343,7 @@ function tagScriptConstructorToStr(comp) {
 
 function tagRouteToStr(comp, indexLoopName) {
 	var separateAttrsElement = separateAttribs(comp.attribs)
-	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
+	// var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
 
 	//console.log(separateAttrsElement.static);
 	var attrsCamel = {};
@@ -351,7 +351,7 @@ function tagRouteToStr(comp, indexLoopName) {
 		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
 	}
 
-	var routeStr = '\n_$_inst_$_.pushRoute(' + JSON.stringify(attrsCamel) + ');\n';
+	var routeStr = `\n${context_alias}.pushRoute(${JSON.stringify(attrsCamel)});\n`;
 	return routeStr;
 }
 
@@ -443,12 +443,18 @@ function tagCustomToStr(comp, indexLoopName) {
 	// #2
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	var basicTag = `_libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias})).$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
+	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias}));`;
 
 	if (hasRoute) {
+		basicTag += `(function(){`;
 		//console.log(comp.children[1].type);
 		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
+	
+		basicTag += `}.bind(${static_key}))();`;
 	}
+
+	basicTag += `${static_key}.$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
+
 	return basicTag;
 }
 
@@ -531,23 +537,25 @@ function tagComposeToStr(comp, indexLoopName) {
 
 	var req_id = `_$req_${nextUID()}`;
 	var sub_item_id = `_subitemid_${nextUID()}`;
-	var basicTag = `\n\tvar ${req_id} = _idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
-
-	basicTag += `require(['${tmp_view}${parser_configs.templateExtension}'], function(_mod){`;
-	basicTag += `\n\t_libfjs_factory.default(_mod.default,${attrs_merged},{is:"${comp.attribs["is"]}", key_id:"${sub_item_id}"},${req_id});\n`;
-	basicTag += `});`
-	//basicTag += '\n\t_idom.elementClose("div");\n';
-
-	//basicTag += '\n\t_libfjs_factory.default.compose("' + tmp_view + '",' + static_key + ',' + attrToContext(separateAttrsElement.dinamic) + ',' + mod_tmp_static_attr_str + ',function(){\n';
-
+	var basicTag = `\n\t_idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
+	basicTag += `require(["${tmp_view}${parser_configs.templateExtension}"], function(_mod){`;
+	basicTag += `\n\t
+		_libfjs_factory
+			.default(
+				_mod.default,
+				${attrs_merged},
+				{
+					is:"${comp.attribs["is"]}",
+					key_id:"${encodeAndSetContext(comp.attribs["id"])}"
+				}
+			)
+			.content(function(){});
+		\n`;
+	basicTag += `}.bind(this));`
 
 	if (comp.children) {
 		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
 	}
-
-	//basicTag += '\n\t});\n';
-
-
 
 	return basicTag;
 }
@@ -791,7 +799,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			if (viewModel) {
 				templatePre += '\t})(' + viewModelAlias + '[_' + viewModelAlias + '_tmp] || ' + viewModelAlias + ');';
 			} else {
-				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['constructor']);
+				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['init']);
 				let initStr = `function(){}`;
 				if(childConstructor){
 					//console.log('child-constructor:',childConstructor.attribs.init);
@@ -956,7 +964,7 @@ function componentToStr(comp, indexLoopName) {
 		return tagContentToStr(comp, indexLoopName);
 	}
 
-	if (comp.name === 'script' && comp.attribs && comp.attribs['constructor']) {
+	if (comp.name === 'script' && comp.attribs && comp.attribs['init']) {
 		return '';
 	}
 
@@ -996,3 +1004,4 @@ module.exports = function (rawHtml, config) {
 	return finalBuffer;
 
 }
+
