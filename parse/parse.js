@@ -50,7 +50,7 @@ function pathToAlias(p_resource_url) {
 		_trueurl = p_resource_url;
 		_aliasname = p_resource_url.substring(p_resource_url.lastIndexOf("/") + 1, p_resource_url.length);
 	};
-	return { alias: _aliasname, url: _trueurl };
+	return { alias: _aliasname, url: _trueurl};
 }
 
 function contextToAlias(str) {
@@ -292,7 +292,8 @@ function tagTextToStr(comp, indexLoopName) {
 	let attrDirectives = [];
 	if (comp.parent && comp.parent.attribs) {
 		let attrKeys = Object.keys(comp.parent.attribs);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
+		attrDirectives = attrKeys
+			.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
 	}
 	let text = comp.data;
 	if (text && text.trim()) {
@@ -388,7 +389,7 @@ function tagCustomToStr(comp, indexLoopName) {
 		namespace = tagname_splited[0];
 		tagname = tagname_splited[1];
 
-		if (requireNamespaces.indexOf(namespace) < 0) {
+		if (!requireNamespaces.some(({alias}) => alias === namespace)) {
 			namespaceNotFound = true;
 			return tagBasicToStr(comp, indexLoopName);
 		}
@@ -606,7 +607,7 @@ function tagBasicToStr(comp, indexLoopName) {
 	let attrDirectives = [];
 	if (comp.attribs) {
 		let attrKeys = Object.keys(comp.attribs);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
 	}
 
 	let tmpNodeAlias = 'executedNode_' + nextUID();
@@ -713,7 +714,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			requireNamespaces = requiresComp
 				.filter(reqcomp => reqcomp.type === "namespace")
-				.map(reqcomp => reqcomp.alias);
+				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
 
 			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory"';
 
@@ -846,6 +847,7 @@ function resolveTagRequire(comp) {
 			type: comp.attribs.type
 			, path: tagobject.url
 			, alias: tagobject.alias
+			, origin: tagobject.origin
 		}
 	}
 	if (comp.attribs.type && comp.attribs.type === "namespace") {
@@ -853,6 +855,7 @@ function resolveTagRequire(comp) {
 			type: comp.attribs.type
 			, path: tagobject.url
 			, alias: tagobject.alias
+			, origin: tagobject.origin
 		}
 	}
 	//suporte aos plugins mais conhecidos
@@ -861,12 +864,14 @@ function resolveTagRequire(comp) {
 			type: "style"
 			, path: fromstr
 			, alias: ""
+			, origin: ""
 		};
 	}
 	return {
 		type: 'template'
 		, path: tagobject.url + parser_configs.templateExtension
 		, alias: tagobject.alias
+		, origin: tagobject.origin
 	}
 }
 
@@ -977,6 +982,15 @@ function componentToStr(comp, indexLoopName) {
 	}
 
 	if (comp.name.indexOf('-') > 0) {
+		if(comp.name.indexOf(':') > -1){
+			const [alias, comp_name] = comp.name.split(':');
+			if(
+				comp_name === 'connect-provider'
+				&& requireNamespaces.some(reqNms => reqNms.alias === alias && reqNms.url === 'v3rtigo')
+			){
+				comp.attribs['target'] = `\${${context_alias}}`;
+			}
+		}
 		return tagCustomToStr(comp, indexLoopName);
 	}
 

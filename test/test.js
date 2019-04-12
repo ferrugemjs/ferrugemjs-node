@@ -13,6 +13,7 @@ console.reset();
 var rawHtml 
 = 
 `<template no-model>
+    <require from="v3rtigo as v3r" type="namespace"/>
 	<div class="test">
 		<span>teste</span>
         <script constructor="init">
@@ -27,6 +28,9 @@ var rawHtml
             <li each="item2 in this.itens">\${ln}</li>
             <div-elem each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</div-elem>
         </ul>
+        <v3r:connect-provider
+            store="\${helloWorldStore.default}"
+        />
 	</div>
 </template>`;
 
