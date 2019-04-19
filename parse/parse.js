@@ -539,7 +539,7 @@ function tagComposeToStr(comp, indexLoopName) {
 	var req_id = `_$req_${nextUID()}`;
 	var sub_item_id = `_subitemid_${nextUID()}`;
 	var basicTag = `\n\t_idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
-	basicTag += `_libfjs_loader.default("${tmp_view}${parser_configs.templateExtension}").then(function(_mod_${sub_item_id}){`;
+	basicTag += `_libfjs_loader.default("${tmp_view}").then(function(_mod_${sub_item_id}){`;
 	basicTag += `\n\t
 		_libfjs_factory
 			.default(
