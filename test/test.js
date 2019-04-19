@@ -31,6 +31,7 @@ var rawHtml
         <v3r:connect-provider
             store="\${helloWorldStore.default}"
         />
+        <compose view:from="test/test" a="123"/>
 	</div>
 </template>`;
 

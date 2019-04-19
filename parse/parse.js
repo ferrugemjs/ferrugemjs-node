@@ -539,11 +539,11 @@ function tagComposeToStr(comp, indexLoopName) {
 	var req_id = `_$req_${nextUID()}`;
 	var sub_item_id = `_subitemid_${nextUID()}`;
 	var basicTag = `\n\t_idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
-	basicTag += `require(["${tmp_view}${parser_configs.templateExtension}"], function(_mod){`;
+	basicTag += `_libfjs_loader.default("${tmp_view}${parser_configs.templateExtension}").then(function(_mod_${sub_item_id}){`;
 	basicTag += `\n\t
 		_libfjs_factory
 			.default(
-				_mod.default,
+				_mod_${sub_item_id}.default,
 				${attrs_merged},
 				{
 					is:"${comp.attribs["is"]}",
@@ -716,7 +716,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory"';
+			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory","ferrugemjs/dist/core/loader"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -730,7 +730,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			templatePre += onlyRequiresStyles.join();
 
-			templatePre += '], function (exports,_idom,_libfjs_factory';
+			templatePre += '], function (exports,_idom,_libfjs_factory,_libfjs_loader';
 
 			if (modAlias.length) {
 				templatePre += ',';
