@@ -356,7 +356,7 @@ function tagRouteToStr(comp, indexLoopName) {
 	return routeStr;
 }
 
-function tagCustomToStr(comp, indexLoopName) {
+function tagCustomToStr(comp, ...otherArgs) {
 
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
 	var static_key = 'custom_comp_keyid_' + nextUID();
@@ -367,10 +367,20 @@ function tagCustomToStr(comp, indexLoopName) {
 		delete comp.attribs["key:id"];
 	}
 	*/
+	let indexLoopName  = '';
+	let keyId = static_key;
+	if(otherArgs.length && typeof otherArgs[0] === 'string'){
+		indexLoopName = otherArgs[0];
+		keyId = `${keyId}_"+${otherArgs[0]}+"`;
+	}
+
 	var alreadyHasKeyId = true;
 	if (!comp.attribs["key:id"]) {
 		comp.attribs["key:id"] = static_key;
 		alreadyHasKeyId = false;
+	}else{
+		keyId = encodeAndSetContext(comp.attribs["key:id"]);
+		comp.attribs["key:id"] = keyId;
 	}
 
 	//comp.attribs["is"] = "compose-view";
@@ -382,8 +392,6 @@ function tagCustomToStr(comp, indexLoopName) {
 	var tagname_constructor = "";
 	var name = comp.name;
 
-	var namespaceNotFound = false;
-
 	if (name.indexOf(":") > -1) {
 		let tagname_splited = name.split(":");
 		namespace = tagname_splited[0];
@@ -391,7 +399,7 @@ function tagCustomToStr(comp, indexLoopName) {
 
 		if (!requireNamespaces.some(({alias}) => alias === namespace)) {
 			namespaceNotFound = true;
-			return tagBasicToStr(comp, indexLoopName);
+			return tagBasicToStr(comp, ...otherArgs);
 		}
 
 		tagname_underscore = slashToCamelCase(tagname);// tagname.replace(/-/g,"_");
@@ -432,7 +440,7 @@ function tagCustomToStr(comp, indexLoopName) {
 	if (hasContent) {
 		hasRoute = comp.children.some(sub_comp => sub_comp.name === "route");
 		if (!hasRoute) {
-			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, indexLoopName));
+			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, ...otherArgs));
 		}
 	}
 	var _tmp_host_vars_ = attrToContext(separate_attrs.dinamic);
@@ -444,17 +452,17 @@ function tagCustomToStr(comp, indexLoopName) {
 	// #2
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias}));`;
+	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${keyId}"}).content(function(){${content}}.bind(${context_alias}));`;
 
 	if (hasRoute) {
 		basicTag += `(function(){`;
 		//console.log(comp.children[1].type);
-		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
+		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, ...otherArgs));
 	
 		basicTag += `}.bind(${static_key}))();`;
 	}
 
-	basicTag += `${static_key}.$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
+	basicTag += `${static_key}.$render({is:"${name}", key_id:"${keyId}"});`;
 
 	return basicTag;
 }
@@ -800,7 +808,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			if (viewModel) {
 				templatePre += '\t})(' + viewModelAlias + '[_' + viewModelAlias + '_tmp] || ' + viewModelAlias + ');';
 			} else {
-				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['init']);
+				const childConstructor = comp.children.find(child => child.name === 'script' && child.attribs && child.attribs['init']);
 				let initStr = `function(){}`;
 				if(childConstructor){
 					//console.log('child-constructor:',childConstructor.attribs.init);
@@ -917,7 +925,7 @@ function forConditionExtractor(comp) {
 	return componentToStr(forcomp);
 }
 
-function componentToStr(comp, indexLoopName) {
+function componentToStr(comp, ...otherArgs) {
 
 	//ignorando os comentarios
 	if (comp.type === 'comment') {
@@ -926,47 +934,47 @@ function componentToStr(comp, indexLoopName) {
 
 	//eliminando os textos vazios
 	if (comp.type === 'text') {
-		return tagTextToStr(comp, indexLoopName);
+		return tagTextToStr(comp, ...otherArgs);
 	}
 	//tratando os skips embutidos
 	if (comp.attribs && comp.attribs["skip"]) {
-		return skipConditionExtractor(comp, indexLoopName);
+		return skipConditionExtractor(comp, ...otherArgs);
 	}
 	//tratando os ifs embutidos
 	if (comp.attribs && comp.attribs["if"]) {
-		return ifConditionExtractor(comp, indexLoopName);
+		return ifConditionExtractor(comp, ...otherArgs);
 	}
 	//precisa esta aqui para evitar deadlock
 	if (comp.name === 'for') {
-		return tagForToStr(comp, indexLoopName);
+		return tagForToStr(comp, ...otherArgs);
 	}
 
 	if (comp.attribs && comp.attribs["each"]) {
-		return forConditionExtractor(comp, indexLoopName);
+		return forConditionExtractor(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'if') {
-		return tagIfToStr(comp, indexLoopName);
+		return tagIfToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'skip') {
-		return tagSkipToStr(comp, indexLoopName);
+		return tagSkipToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'else') {
-		return tagElseToStr(comp, indexLoopName);
+		return tagElseToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'elseif') {
-		return tagElseIfToStr(comp, indexLoopName);
+		return tagElseIfToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'route') {
-		return tagRouteToStr(comp, indexLoopName);
+		return tagRouteToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'compose') {
-		return tagComposeToStr(comp, indexLoopName);
+		return tagComposeToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'content') {
-		return tagContentToStr(comp, indexLoopName);
+		return tagContentToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'script' && comp.attribs && comp.attribs['init']) {
@@ -974,11 +982,11 @@ function componentToStr(comp, indexLoopName) {
 	}
 
 	if (comp.name === 'script') {
-		return tagCommandToStr(comp, indexLoopName);
+		return tagCommandToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name.indexOf("-") > 0 && requireScriptList.indexOf(comp.name) > -1) {
-		return tagRpFunctionToStr(comp, indexLoopName);
+		return tagRpFunctionToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name.indexOf('-') > 0) {
@@ -991,10 +999,10 @@ function componentToStr(comp, indexLoopName) {
 				comp.attribs['target'] = `\${${context_alias}}`;
 			}
 		}
-		return tagCustomToStr(comp, indexLoopName);
+		return tagCustomToStr(comp, ...otherArgs);
 	}
 
-	return tagBasicToStr(comp, indexLoopName);
+	return tagBasicToStr(comp, ...otherArgs);
 }
 
 module.exports = function (rawHtml, config) {
