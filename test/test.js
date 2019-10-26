@@ -13,6 +13,7 @@ console.reset();
 var rawHtml 
 = 
 `<template no-model>
+    <require from="v3rtigo as v3r" type="namespace"/>
 	<div class="test">
 		<span>teste</span>
         <script constructor="init">
@@ -20,13 +21,20 @@ var rawHtml
                 this.itens = [];
             }
         </script>
-        <for each="item, $idx in this.itens">
+        <for each="item,$idx in this.itens">
             <div>\${item}</div>
         </for>
+        <v3r:connect-provider
+            store="\${helloWorldStore.default}"
+        />
+
+        <compose view:from="test/test" a="123"/>
         <ul>
-            <li each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</li>
-            <li each="item2, in this.itens2" data-index="\${ln}">\${ln}</li>
+            <li each="item2 in this.itens">\${ln}</li>
+            <div-elem each="let x = 0, ln = this.itens.length; x < ln ; x++">${'this.itens.length'}</div-elem>
         </ul>
+        <comp-test each="item,xind in this.list" text="\${item.text}" />
+        <comp-test each="item in this.list" text="\${item.text}" />
 	</div>
 </template>`;
 

@@ -50,7 +50,7 @@ function pathToAlias(p_resource_url) {
 		_trueurl = p_resource_url;
 		_aliasname = p_resource_url.substring(p_resource_url.lastIndexOf("/") + 1, p_resource_url.length);
 	};
-	return { alias: _aliasname, url: _trueurl };
+	return { alias: _aliasname, url: _trueurl};
 }
 
 function contextToAlias(str) {
@@ -237,20 +237,26 @@ function tagForToStr(comp, indexLoopName) {
     let eachTxt = comp.attribs.each || '';
     const isFor = eachTxt.indexOf(';') > -1;
 	let index_array = "$tmp_index_name_" + nextUID();
+    let txtFor = '';
 
     if(isFor){
-	    var txtFor = `\n\tfor(${comp.attribs.each}){`;
-	    comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
+        var array_each = eachTxt.split(";");
+        array_each[0] = `${array_each[0]},${index_array} = 0`;
+        array_each[2] = `${array_each[2]},${index_array}++`;
+        eachTxt = array_each.join(";");
+	    txtFor = `\n\tfor(${eachTxt}){`;
+	    comp.children.forEach(sub_comp => txtFor += `\t${componentToStr(sub_comp, index_array, indexLoopName)}`);
 	    txtFor += `\t};\n`;
         return txtFor;
     }
 
+    
 	var array_each = eachTxt.split(" in ");
 	var sub_array_each = array_each[0].split(",");
 	if (sub_array_each.length > 1) {
 		index_array = sub_array_each[1];
 	}
-	var txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
+	txtFor = '\n\t' + contextToAlias(array_each[1]) + '.forEach(function(' + sub_array_each[0] + ',' + index_array + '){';
 	comp.children.forEach(sub_comp => txtFor += '\t' + componentToStr(sub_comp, index_array, indexLoopName));
 	txtFor += `\t}.bind(${context_alias}));\n`;
 
@@ -286,7 +292,8 @@ function tagTextToStr(comp, indexLoopName) {
 	let attrDirectives = [];
 	if (comp.parent && comp.parent.attribs) {
 		let attrKeys = Object.keys(comp.parent.attribs);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
+		attrDirectives = attrKeys
+			.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
 	}
 	let text = comp.data;
 	if (text && text.trim()) {
@@ -337,7 +344,7 @@ function tagScriptConstructorToStr(comp) {
 
 function tagRouteToStr(comp, indexLoopName) {
 	var separateAttrsElement = separateAttribs(comp.attribs)
-	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
+	// var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
 
 	//console.log(separateAttrsElement.static);
 	var attrsCamel = {};
@@ -345,11 +352,11 @@ function tagRouteToStr(comp, indexLoopName) {
 		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
 	}
 
-	var routeStr = '\n_$_inst_$_.pushRoute(' + JSON.stringify(attrsCamel) + ');\n';
+	var routeStr = `\n${context_alias}.pushRoute(${JSON.stringify(attrsCamel)});\n`;
 	return routeStr;
 }
 
-function tagCustomToStr(comp, indexLoopName) {
+function tagCustomToStr(comp, ...otherArgs) {
 
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
 	var static_key = 'custom_comp_keyid_' + nextUID();
@@ -360,10 +367,20 @@ function tagCustomToStr(comp, indexLoopName) {
 		delete comp.attribs["key:id"];
 	}
 	*/
+	let indexLoopName  = '';
+	let keyId = static_key;
+	if(otherArgs.length && typeof otherArgs[0] === 'string'){
+		indexLoopName = otherArgs[0];
+		keyId = `${keyId}_"+${otherArgs[0]}+"`;
+	}
+
 	var alreadyHasKeyId = true;
 	if (!comp.attribs["key:id"]) {
 		comp.attribs["key:id"] = static_key;
 		alreadyHasKeyId = false;
+	}else{
+		keyId = encodeAndSetContext(comp.attribs["key:id"]);
+		comp.attribs["key:id"] = keyId;
 	}
 
 	//comp.attribs["is"] = "compose-view";
@@ -375,16 +392,14 @@ function tagCustomToStr(comp, indexLoopName) {
 	var tagname_constructor = "";
 	var name = comp.name;
 
-	var namespaceNotFound = false;
-
 	if (name.indexOf(":") > -1) {
 		let tagname_splited = name.split(":");
 		namespace = tagname_splited[0];
 		tagname = tagname_splited[1];
 
-		if (requireNamespaces.indexOf(namespace) < 0) {
+		if (!requireNamespaces.some(({alias}) => alias === namespace)) {
 			namespaceNotFound = true;
-			return tagBasicToStr(comp, indexLoopName);
+			return tagBasicToStr(comp, ...otherArgs);
 		}
 
 		tagname_underscore = slashToCamelCase(tagname);// tagname.replace(/-/g,"_");
@@ -425,7 +440,7 @@ function tagCustomToStr(comp, indexLoopName) {
 	if (hasContent) {
 		hasRoute = comp.children.some(sub_comp => sub_comp.name === "route");
 		if (!hasRoute) {
-			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, indexLoopName));
+			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, ...otherArgs));
 		}
 	}
 	var _tmp_host_vars_ = attrToContext(separate_attrs.dinamic);
@@ -437,12 +452,18 @@ function tagCustomToStr(comp, indexLoopName) {
 	// #2
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	var basicTag = `_libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${comp.attribs["key:id"]}"}).content(function(){${content}}.bind(${context_alias})).$render({is:"${name}", key_id:"${comp.attribs["key:id"]}"});`;
+	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${keyId}"}).content(function(){${content}}.bind(${context_alias}));`;
 
 	if (hasRoute) {
+		basicTag += `(function(){`;
 		//console.log(comp.children[1].type);
-		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
+		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, ...otherArgs));
+	
+		basicTag += `}.bind(${static_key}))();`;
 	}
+
+	basicTag += `${static_key}.$render({is:"${name}", key_id:"${keyId}"});`;
+
 	return basicTag;
 }
 
@@ -525,23 +546,25 @@ function tagComposeToStr(comp, indexLoopName) {
 
 	var req_id = `_$req_${nextUID()}`;
 	var sub_item_id = `_subitemid_${nextUID()}`;
-	var basicTag = `\n\tvar ${req_id} = _idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
-
-	basicTag += `require(['${tmp_view}${parser_configs.templateExtension}'], function(_mod){`;
-	basicTag += `\n\t_libfjs_factory.default(_mod.default,${attrs_merged},{is:"${comp.attribs["is"]}", key_id:"${sub_item_id}"},${req_id});\n`;
-	basicTag += `});`
-	//basicTag += '\n\t_idom.elementClose("div");\n';
-
-	//basicTag += '\n\t_libfjs_factory.default.compose("' + tmp_view + '",' + static_key + ',' + attrToContext(separateAttrsElement.dinamic) + ',' + mod_tmp_static_attr_str + ',function(){\n';
-
+	var basicTag = `\n\t_idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
+	basicTag += `_libfjs_loader.default("${tmp_view}").then(function(_mod_${sub_item_id}){`;
+	basicTag += `\n\t
+		_libfjs_factory
+			.default(
+				_mod_${sub_item_id}.default,
+				${attrs_merged},
+				{
+					is:"${comp.attribs["is"]}",
+					key_id:"${encodeAndSetContext(comp.attribs["id"])}"
+				}
+			)
+			.content(function(){});
+		\n`;
+	basicTag += `}.bind(this));`
 
 	if (comp.children) {
 		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
 	}
-
-	//basicTag += '\n\t});\n';
-
-
 
 	return basicTag;
 }
@@ -592,7 +615,7 @@ function tagBasicToStr(comp, indexLoopName) {
 	let attrDirectives = [];
 	if (comp.attribs) {
 		let attrKeys = Object.keys(comp.attribs);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.indexOf(tmpattr.split(":")[0]) > -1);
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
 	}
 
 	let tmpNodeAlias = 'executedNode_' + nextUID();
@@ -699,9 +722,9 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			requireNamespaces = requiresComp
 				.filter(reqcomp => reqcomp.type === "namespace")
-				.map(reqcomp => reqcomp.alias);
+				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory"';
+			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory","ferrugemjs/dist/core/loader"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -715,7 +738,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			templatePre += onlyRequiresStyles.join();
 
-			templatePre += '], function (exports,_idom,_libfjs_factory';
+			templatePre += '], function (exports,_idom,_libfjs_factory,_libfjs_loader';
 
 			if (modAlias.length) {
 				templatePre += ',';
@@ -785,7 +808,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			if (viewModel) {
 				templatePre += '\t})(' + viewModelAlias + '[_' + viewModelAlias + '_tmp] || ' + viewModelAlias + ');';
 			} else {
-				const childConstructor = subcomp.children.find(child => child.name === 'script' && child.attribs && child.attribs['constructor']);
+				const childConstructor = comp.children.find(child => child.name === 'script' && child.attribs && child.attribs['init']);
 				let initStr = `function(){}`;
 				if(childConstructor){
 					//console.log('child-constructor:',childConstructor.attribs.init);
@@ -832,6 +855,7 @@ function resolveTagRequire(comp) {
 			type: comp.attribs.type
 			, path: tagobject.url
 			, alias: tagobject.alias
+			, origin: tagobject.origin
 		}
 	}
 	if (comp.attribs.type && comp.attribs.type === "namespace") {
@@ -839,6 +863,7 @@ function resolveTagRequire(comp) {
 			type: comp.attribs.type
 			, path: tagobject.url
 			, alias: tagobject.alias
+			, origin: tagobject.origin
 		}
 	}
 	//suporte aos plugins mais conhecidos
@@ -847,12 +872,14 @@ function resolveTagRequire(comp) {
 			type: "style"
 			, path: fromstr
 			, alias: ""
+			, origin: ""
 		};
 	}
 	return {
 		type: 'template'
 		, path: tagobject.url + parser_configs.templateExtension
 		, alias: tagobject.alias
+		, origin: tagobject.origin
 	}
 }
 
@@ -898,7 +925,7 @@ function forConditionExtractor(comp) {
 	return componentToStr(forcomp);
 }
 
-function componentToStr(comp, indexLoopName) {
+function componentToStr(comp, ...otherArgs) {
 
 	//ignorando os comentarios
 	if (comp.type === 'comment') {
@@ -907,66 +934,75 @@ function componentToStr(comp, indexLoopName) {
 
 	//eliminando os textos vazios
 	if (comp.type === 'text') {
-		return tagTextToStr(comp, indexLoopName);
+		return tagTextToStr(comp, ...otherArgs);
 	}
 	//tratando os skips embutidos
 	if (comp.attribs && comp.attribs["skip"]) {
-		return skipConditionExtractor(comp, indexLoopName);
+		return skipConditionExtractor(comp, ...otherArgs);
 	}
 	//tratando os ifs embutidos
 	if (comp.attribs && comp.attribs["if"]) {
-		return ifConditionExtractor(comp, indexLoopName);
+		return ifConditionExtractor(comp, ...otherArgs);
 	}
 	//precisa esta aqui para evitar deadlock
 	if (comp.name === 'for') {
-		return tagForToStr(comp, indexLoopName);
+		return tagForToStr(comp, ...otherArgs);
 	}
 
 	if (comp.attribs && comp.attribs["each"]) {
-		return forConditionExtractor(comp, indexLoopName);
+		return forConditionExtractor(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'if') {
-		return tagIfToStr(comp, indexLoopName);
+		return tagIfToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'skip') {
-		return tagSkipToStr(comp, indexLoopName);
+		return tagSkipToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'else') {
-		return tagElseToStr(comp, indexLoopName);
+		return tagElseToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'elseif') {
-		return tagElseIfToStr(comp, indexLoopName);
+		return tagElseIfToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'route') {
-		return tagRouteToStr(comp, indexLoopName);
+		return tagRouteToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'compose') {
-		return tagComposeToStr(comp, indexLoopName);
+		return tagComposeToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'content') {
-		return tagContentToStr(comp, indexLoopName);
+		return tagContentToStr(comp, ...otherArgs);
 	}
 
-	if (comp.name === 'script' && comp.attribs && comp.attribs['constructor']) {
+	if (comp.name === 'script' && comp.attribs && comp.attribs['init']) {
 		return '';
 	}
 
 	if (comp.name === 'script') {
-		return tagCommandToStr(comp, indexLoopName);
+		return tagCommandToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name.indexOf("-") > 0 && requireScriptList.indexOf(comp.name) > -1) {
-		return tagRpFunctionToStr(comp, indexLoopName);
+		return tagRpFunctionToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name.indexOf('-') > 0) {
-		return tagCustomToStr(comp, indexLoopName);
+		if(comp.name.indexOf(':') > -1){
+			const [alias, comp_name] = comp.name.split(':');
+			if(
+				comp_name === 'connect-provider'
+				&& requireNamespaces.some(reqNms => reqNms.alias === alias && reqNms.url === 'v3rtigo')
+			){
+				comp.attribs['target'] = `\${${context_alias}}`;
+			}
+		}
+		return tagCustomToStr(comp, ...otherArgs);
 	}
 
-	return tagBasicToStr(comp, indexLoopName);
+	return tagBasicToStr(comp, ...otherArgs);
 }
 
 module.exports = function (rawHtml, config) {
@@ -990,3 +1026,4 @@ module.exports = function (rawHtml, config) {
 	return finalBuffer;
 
 }
+
