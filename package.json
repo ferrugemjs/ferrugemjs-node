@@ -39,7 +39,6 @@
   "dependencies": {
     "domhandler": "^2.3.0",
     "htmlparser2": "^3.9.2",
-    "nanoid": "^0.2.0",
-    "user": "0.0.0"
+    "nanoid": "^0.2.0"
   }
 }

@@ -791,14 +791,19 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			let subcompSterie = Object.assign({}, subcomp, { children: [] });
 			subcompSterieStr = componentToStr(subcompSterie).replace(`_idom.elementClose("${subcompSterie.name}");`, '');
-			subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
+			
+			if(subcomp.name !== 'fragment'){
+				subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
+			}
 
 			subcomp.children.forEach(child => subcompSterieStr += '\t\t' + componentToStr(child));
 
 			childrenstr += subcompSterieStr;
 
-			childrenstr += `if(!config_props.loaded){_idom.elementClose("${subcomp.name}");};`;
-
+			if(subcomp.name !== 'fragment'){
+				childrenstr += `if(!config_props.loaded){_idom.elementClose("${subcomp.name}");};`;
+			}
+			
 			childrenstr += '\t}';
 
 			templatePre += childrenstr;
@@ -971,6 +976,9 @@ function componentToStr(comp, ...otherArgs) {
 	}
 	if (comp.name === 'compose') {
 		return tagComposeToStr(comp, ...otherArgs);
+	}
+	if (comp.name === 'fragment') {
+		return '';
 	}
 
 	if (comp.name === 'content') {
