@@ -39,12 +39,24 @@ const rawHtml
 </template>`;
 
 const rawHtml2 = `
-	<template no-model>
+	<template>
 		<fragment>
-			<p></p>
-			<div></div>
-			<p key:id="1234"></p>
-			<input type="text" change.bind="this.title"/>
+			<span click="this.setVerdadeiro(1, this.verdadeiro, ('ssss'))">Other Way2</span>
+			<span onclick="this.setVerdadeiro">Other Way</span>
+			<div class="especial">
+				<span>Ola</span>
+			</div>
+			<span>Um novo component</span>
+			<input test="ufu" type="text" nadameu="\${this.nada}"  input.bind="texto"/>
+			<input test="ufu" value="gafanhoto" type="checkbox" change.bind="verdadeiro"/>
+			<select change.bind="estado">
+				<option value="1">Vivo</option>
+				<option value="2">Morto</option>
+				<option value="3">Ambos</option>
+				<option value="4">Desconhecido</option>
+			</select>
+			<p>o padeiro é \${this.state.verdadeiro}</p>
+			<strong>esta \${this.state.estado} e o texto é \${this.state.texto}</strong>
 		</fragment>
 	</template>
 `;
@@ -53,7 +65,10 @@ const rawHtml2 = `
 console.log(
 
 	beautify(
-	fjsparse(rawHtml2,{viewModel: 'test-comp', env: 'development', resourcePath: 'any/place/in/world/test-comp.html'})
-	, { indent_size: 4 }) 
 
-)
+	fjsparse(rawHtml2,{viewModel: 'any/other-comp', env: 'development', resourcePath: 'any/place/in/world/test-comp.html'})
+	, { indent_size: 4 }
+
+	) 
+
+);

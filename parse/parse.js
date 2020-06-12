@@ -28,15 +28,17 @@ function flush() {
 	requireNamespaces = [];
 }
 
-function slashToCamelCase(str) {
-	return str
-		.toLowerCase()
-		.replace(
-			/-(.)/g,
-			function (match, group1) {
-				return group1.toUpperCase();
-			}
-		);
+const toCamelCase = (str, separator) => {
+	let strLower = str.toLowerCase();
+	if(separator){
+		let regex = new RegExp(separator+'(.)', 'g');
+		return strLower
+			.replace(
+				regex,
+				(match, group1) => group1.toUpperCase()
+			);
+	}
+	return strLower.substring(0, 1).toUpperCase() + strLower.substring(1, strLower.length + 1);
 }
 
 function pathToAlias(p_resource_url) {
@@ -113,7 +115,7 @@ function separateAttribs(attribs) {
 			//obj_array.push(''+key+'');
 			//obj_array.push(''+attribs[key]+'');
 			static_attr[key] = attribs[key];
-		} else if (key.indexOf(".") > 0) {
+		} else if (key.indexOf(".") > 0 || key.indexOf("on") === 0) {
 			//is a custom event		
 			dinamic_attr[key] = contextToAlias(attribs[key]);
 			//dinamic_attr[key] = "${"+contextToAlias(attribs[key])+"}";
@@ -134,71 +136,71 @@ function separateAttribs(attribs) {
 	}
 }
 
-function objStaticAttrToStr(attribs) {
-	var bindField = "";
-	var obj_array_static = [];
-	for (var key in attribs) {
-		obj_array_static.push('' + key + '');
-		obj_array_static.push(attribs[key]);
+const objStaticAttrToStr = (attribs) => {
+	const obj_array_static = [];
+	for (let key in attribs) {
+		obj_array_static.push(`"${key}":"${attribs[key]}"`);
 	}
-	var mod_tmp_static_attr_str = '["' + obj_array_static.join('","') + '"]';
-	return mod_tmp_static_attr_str;
-
+	return obj_array_static.join(',');
 }
 
-function objDinamicAttrToStr(attribs, tagName, type) {
-	var obj_array = [];
-	var bindField = "";
-	for (var key in attribs) {
-		var indxBind = key.indexOf(".bind");
+const objDinamicAttrToStr = (attribs, tagName, type) => {
+	const obj_array = [];
+	for (let key in attribs) {
+		const indxBind = key.indexOf(".bind");
+		const indxTrigger = key.indexOf("on");
+		// console.log(indxTrigger);
 		//console.log(key,key.lastIndexOf(".if") < 0);
 		if (indxBind > -1 && (tagName === "input" || tagName === "textarea" || tagName === "select")) {
-			var evtstr = "on" + key.substring(0, indxBind);
-			obj_array.push(evtstr);
+			// console.log(toCamelCase(key, ".bind"));
+			obj_array.push('"on' + toCamelCase(key.substring(0,indxBind)) +'"');
 			//console.log(attribs.type);
-			var attr_pure = attribs[key].replace(context_alias + ".", "");
+			var attr_pure = attribs[key];
 			if (tagName === "select") {
-				obj_array.push('#{#function($evt){\nvar tmp_$target$_evt=$evt.target;\n' + context_alias + '.' + (attr_pure) + ' = tmp_$target$_evt.options[tmp_$target$_evt.selectedIndex].value;\n}.bind(' + context_alias + ')#}#');
+				obj_array.push('function($evt){\nlet tmp_$target$_evt=$evt.target;\nthis.setState({' + (attr_pure) + ':tmp_$target$_evt.options[tmp_$target$_evt.selectedIndex].value});\n}.bind(this)');
 			} else if (type === "checkbox" || type === "radio") {
 				//console.log( attribs[key]);							
-				obj_array.push('#{#function($evt){\n' + context_alias + '.' + (attr_pure) + ' = $evt.target.checked?$evt.target.value:null\n}.bind(' + context_alias + ')\n#}#');
+				obj_array.push('function($evt){\nthis.setState({' + (attr_pure) + ':$evt.target.checked?$evt.target.value:null});\n}.bind(this)\n');
 			} else {
 				//console.log( attribs[key]);							
-				obj_array.push('#{#function($evt){\n' + context_alias + '.' + (attr_pure) + ' = $evt.target.value\n}.bind(' + context_alias + ')\n#}#');
+				obj_array.push('function($evt){\nthis.setState({' + (attr_pure) + ':$evt.target.value});\n}.bind(this)\n');
 			}
-			//console.log(attribs[key])								
-		} else if (key.indexOf(".") > 0) {
-			var eventStripped = adjustEvents('on' + key.substring(0, key.indexOf(".")) + '', attribs[key]);
-			obj_array.push(eventStripped.key);
-			var vlFn = eventStripped.value;
-			obj_array.push("#{#" + vlFn.substring(2, vlFn.length - 1) + "#}#");
+			//console.log(attribs[key])					
+		} else if (indxTrigger === 0) {
+			// console.log(indxTrigger);
+			obj_array.push('"on'+toCamelCase(key, 'on')+'"');
+			// var vlFn = eventStripped.value;
+			if(attribs[key].indexOf('(') > 0){
+				const paIndex = attribs[key].indexOf('(');
+				// console.log('tem argumentos: ', `${attribs[key].substring(0, paIndex)}.bind(this, ${attribs[key].substring(paIndex+1)}`);
+
+				obj_array.push( `${attribs[key].substring(0, paIndex)}.bind(this, ${attribs[key].substring(paIndex+1)}`);
+			}else{
+				obj_array.push(`${attribs[key]}.bind(this)`);
+			}
 
 		} else {
 			if (typeof attribs[key] === "string" && attribs[key].indexOf("${") === 0) {
-				obj_array.push('' + key + '');
+				obj_array.push('"' + key + '"');
 				var vlFn = attribs[key];
 				if (key === "style" && vlFn.lastIndexOf(";") === (vlFn.length - 1)) {
 					var lastComman = vlFn.lastIndexOf(";");
 					vlFn = vlFn.substring(0, lastComman);
 				}
-				//obj_array.push(contextToAlias(attribs[key]));
-				obj_array.push(contextToAlias("#{#" + vlFn.substring(2, vlFn.length - 1) + "#}#"));
+				obj_array.push(contextToAlias(vlFn.substring(2, vlFn.length - 1)));
 			}
 		}
 	}
-	var mod_tmp_attr_str_ = '"' + obj_array.join('","') + '"';
-	/*	
-	var mod_tmp_attr_str = mod_tmp_attr_str_.replace(/\"\$\{([^}]*)\}\"/g,function($0,$1){
-				return "("+$1+")";
-		});
-	*/
-	var mod_tmp_attr_str = mod_tmp_attr_str_;
-	//console.log(mod_tmp_attr_str_,mod_tmp_attr_str);
-	mod_tmp_attr_str = mod_tmp_attr_str.replace(/\"#{#/g, "(");
-	mod_tmp_attr_str = mod_tmp_attr_str.replace(/#}#\"/g, ")");
 
+	// console.log(obj_array);
 
-	return mod_tmp_attr_str;
+	return obj_array.reduce((partA, partB,indice) => {
+		if(indice === 0){
+			return partA+partB
+		}
+		return partA+(indice % 2 === 0 ? ',' : ':')+partB;
+	}, '');
+
 
 }
 
@@ -282,13 +284,14 @@ function formatTextToStr(text) {
 			.replace(/([^$])((\{)(.+?)(\}))/g, '$1#beg-brackets#$4#end-brackets#')
 			.replace(/\$\{([^}]*)\}/g, function ($1, $2) {
 				return '"+(' + contextToAlias($2) + ')+"';
+				// return '' + contextToAlias($2) + '';
 			})
 			.replace(/#beg-brackets#/g, '{').replace(/#end-brackets#/g, '}');
 		return strTmp;
 	}
 	return "";
 }
-function tagTextToStr(comp, indexLoopName) {
+function tagTextToStr(comp) {
 	let attrDirectives = [];
 	if (comp.parent && comp.parent.attribs) {
 		let attrKeys = Object.keys(comp.parent.attribs);
@@ -304,13 +307,14 @@ function tagTextToStr(comp, indexLoopName) {
 			attrDirectives.forEach(attr => {
 				var splited = attr.split(":");
 				var namespace = splited[0];
-				var directiveCamelCase = slashToCamelCase(splited[1]);
+				var directiveCamelCase =  toCamelCase(splited[1],'-');
 				let attrVlw = '"' + encodeAndSetContext(comp.parent.attribs[attr]) + '"';
 				concatenedStr += '\t\n' + namespace + '.' + directiveCamelCase + '(' + tmpNodeAlias + (comp.parent.attribs[attr] ? ',' + attrVlw : '') + ');\t\n';
 			});
 			return concatenedStr;
 		}
-		return '\t\n_idom.text("' + strTmp + '");\t\n';
+		// return '\t\n,' + formatTextToStr(text);
+		return '\t\n"' + formatTextToStr(text) + '"';
 	}
 	return "";
 }
@@ -349,11 +353,15 @@ function tagRouteToStr(comp, indexLoopName) {
 	//console.log(separateAttrsElement.static);
 	var attrsCamel = {};
 	for (var key in separateAttrsElement.static) {
-		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
+		attrsCamel[toCamelCase(key,'-')] = separateAttrsElement.static[key];
 	}
 
 	var routeStr = `\n${context_alias}.pushRoute(${JSON.stringify(attrsCamel)});\n`;
 	return routeStr;
+}
+
+const tagFragmentToStr = (comp, ...otherArgs) =>{
+	return tagBasicToStr(comp, ...otherArgs);
 }
 
 function tagCustomToStr(comp, ...otherArgs) {
@@ -402,7 +410,7 @@ function tagCustomToStr(comp, ...otherArgs) {
 			return tagBasicToStr(comp, ...otherArgs);
 		}
 
-		tagname_underscore = slashToCamelCase(tagname);// tagname.replace(/-/g,"_");
+		tagname_underscore = toCamelCase(tagname, '-');// tagname.replace(/-/g,"_");
 		tagname_with_namespace = namespace + '.' + tagname_underscore;
 		tagname_constructor = tagname_with_namespace;
 	} else {
@@ -462,22 +470,21 @@ function tagCustomToStr(comp, ...otherArgs) {
 		basicTag += `}.bind(${static_key}))();`;
 	}
 
-	basicTag += `${static_key}.$render({is:"${name}", key_id:"${keyId}"});`;
+	basicTag += `${static_key}.render({is:"${name}", key_id:"${keyId}"});`;
 
 	return basicTag;
 }
 
 function tagRpFunctionToStr(comp) {
 	var rpfnStr = '';
-	var nameCamel = slashToCamelCase(comp.name);
 	var attrsCamel = {};
 	var separate_attrs = separateAttribs(comp.attribs);
 	for (var key in separate_attrs.dinamic) {
-		var keyCamel = slashToCamelCase(key);
+		var keyCamel = toCamelCase(key, '-');
 		attrsCamel[keyCamel] = separate_attrs.dinamic[key];
 	}
 	for (var key in separate_attrs.static) {
-		var keyCamel = slashToCamelCase(key);
+		var keyCamel = toCamelCase(key, '-');
 		//verificar se eh uma funcao
 		if (key.indexOf("on-") === 0) {
 			attrsCamel[keyCamel] = adjustEvents(key, separate_attrs.static[key]).value;
@@ -569,47 +576,75 @@ function tagComposeToStr(comp, indexLoopName) {
 	return basicTag;
 }
 
+const formatAttributes = (keyStr, comp) => {
+	const separateAttrsElement = separateAttribs(comp.attribs);
+
+	const regx = /(\w*)+\.if$/g;
+	for (key in separateAttrsElement.static) {
+		if (regx.test(key)) {
+			const attrcondi = key.replace(".if", "");
+			separateAttrsElement.dinamic[attrcondi] = "${" + separateAttrsElement.static[key] + " ? new String('" + attrcondi + "') : null }";
+			delete separateAttrsElement.static[key];
+		}else if(key === 'class'){
+			separateAttrsElement.static['className'] = separateAttrsElement.static['class'];
+			delete separateAttrsElement.static['class'];
+		}
+	};
+
+	const type = (separateAttrsElement.static ? separateAttrsElement.static["type"] : "");
+	const staticAttrs = objStaticAttrToStr(separateAttrsElement.static);
+	const dinamicAttrs = objDinamicAttrToStr(separateAttrsElement.dinamic, comp.name, type);
+	
+	// console.log('keyStr-S:', staticAttrs);
+	// console.log('keyStr-D:', dinamicAttrs);
+
+	if(keyStr !== 'null' || staticAttrs || dinamicAttrs){
+		let attrsStr = '{';
+		attrsStr += [keyStr , staticAttrs , dinamicAttrs]
+				.filter(term => term !== 'null' && term.length)
+				.join(',');
+		return attrsStr + '}';
+	}
+	return 'null';
+}
+
 function tagBasicToStr(comp, indexLoopName) {
 	var static_key = 'null';
 	if (comp.attribs && comp.attribs["key:id"]) {
 		static_key = encodeAndSetContext(comp.attribs["key:id"]);
 		delete comp.attribs["key:id"];
 	}
-	var separateAttrsElement = separateAttribs(comp.attribs);
-	var type = (separateAttrsElement.static ? separateAttrsElement.static["type"] : "");
-	var regx = /(\w*)+\.if$/g;
-	for (key in separateAttrsElement.static) {
-		if (regx.test(key)) {
-			var attrcondi = key.replace(".if", "");
-			separateAttrsElement.dinamic[attrcondi] = "${" + separateAttrsElement.static[key] + " ? new String('" + attrcondi + "') : null }";
-			delete separateAttrsElement.static[key];
-		}
-	};
 
-	var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
-
-	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic, comp.name, type);
 	var basicTag = '';
 	var haveStaticKeyGen = false;
 
-	if (static_key === 'null' && (mod_tmp_static_attr_str !== '[""]' || mod_tmp_attr_str !== '""')) {
-		static_key = nextUID();
-		haveStaticKeyGen = true;
+	const compName = comp.name === 'fragment' ? '_react.Fragment' : `"${comp.name}"`;
+
+	if(static_key !== 'null'){
+		keyStr = '"key":"' + static_key + (indexLoopName && haveStaticKeyGen ? '_"+' + indexLoopName : '"');
 	}
-	if (static_key === 'null') {
-		basicTag = '\n\t_idom.elementOpen("' + comp.name + '");\n';
-	} else {
-		/*		
-		if(comp.parent && comp.parent.attribs && comp.parent.attribs['key:id']){
-			console.log(comp.parent.attribs['key:id']);
-			//static_key = comp.parent.attribs['key:id']+static_key;
-		}
-		*/
-		//comp.attribs['key:id'] = static_key;
-		basicTag = ' _idom.elementOpen("' + comp.name + '","' + static_key + (indexLoopName && haveStaticKeyGen ? '_"+' + indexLoopName : '"') + ',' + mod_tmp_static_attr_str + ',' + mod_tmp_attr_str + ');\n';
-	}
+
+	basicTag = '\n\t_react.createElement(' + compName + ', '+formatAttributes(static_key, comp);
+
 	if (comp.children) {
-		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
+		// comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
+		const childrenLth = comp.children.length;
+		let hasAtLeastOneTrueChild = false;
+		let basicTagChildren = comp.children.reduce((oldText, child, index) => {
+			const childConverted = componentToStr(child, indexLoopName);
+			const childContentSize = childConverted.trim().length;
+			if(childContentSize && !hasAtLeastOneTrueChild){
+				hasAtLeastOneTrueChild = true;
+			}
+			if(!childContentSize){
+				return oldText;
+			}
+			return oldText + childConverted +  (index+1 < childrenLth-1  ? ',' : '');
+		}, '');
+
+		if(hasAtLeastOneTrueChild){
+			basicTag += ',' + basicTagChildren;
+		}
 	}
 
 	let attrDirectives = [];
@@ -623,16 +658,14 @@ function tagBasicToStr(comp, indexLoopName) {
 		basicTag = '\t\nvar ' + tmpNodeAlias + ' =' + basicTag + '\t\n';
 	}
 
-
-
-	basicTag += '\n\t_idom.elementClose("' + comp.name + '");\n';
+	basicTag += '\n\t)';
 
 	if (attrDirectives.length) {
 		let concatenedStr = '';
 		attrDirectives.forEach(attr => {
 			var splited = attr.split(":");
 			var namespace = splited[0];
-			var directiveCamelCase = slashToCamelCase(splited[1]);
+			var directiveCamelCase = toCamelCase(splited[1], '-');
 			let attrVlw = '"' + encodeAndSetContext(comp.attribs[attr]) + '"';
 			concatenedStr += '\t\n' + namespace + '.' + directiveCamelCase + '(' + tmpNodeAlias + (comp.attribs[attr] ? ',' + attrVlw : '') + ');\t\n';
 		});
@@ -724,7 +757,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","ferrugemjs/dist/core/component-factory","ferrugemjs/dist/core/loader"';
+			templatePre += 'define(["react"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -738,7 +771,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			templatePre += onlyRequiresStyles.join();
 
-			templatePre += '], function (exports,_idom,_libfjs_factory,_libfjs_loader';
+			templatePre += '], function (_react';
 
 			if (modAlias.length) {
 				templatePre += ',';
@@ -756,55 +789,62 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			comp
 				.children
-				.filter(sub_comp => sub_comp.type == 'style' && sub_comp.name == 'style')
+				.filter(sub_comp => sub_comp.type === 'style' && sub_comp.name === 'style')
 				.forEach(sub_comp => stylesStr += '\t' + tagStyleToStr(sub_comp));
 
 			templatePre += stylesStr + '\t';
 
 			var subClazzName = '_clazz_sub_' + nextUID() + '_tmp';
-			templatePre += 'exports.default = (function(super_clazz){\n';
-			templatePre += '\t\tfunction ' + subClazzName + '(props){\n';
-			templatePre += '\t\t\tif(super_clazz.call){\n';
-			templatePre += '\t\t\t\tsuper_clazz.call(this, props);\n';
-			templatePre += '\t\t\t}\n';
+			templatePre += 'var '+subClazzName+' = (function(_super){\n';
+			templatePre += '\t\__extends(' + subClazzName + ', _super);\n';
+			templatePre += '\t\tfunction ' + subClazzName + '(){\n';
+			templatePre += '\t\t\t\treturn _super !== null && _super.apply(this, arguments) || this;\n';
 			templatePre += '\t\t};\n';
-			templatePre += '\t\t' + subClazzName + '.prototype = Object.create(super_clazz.prototype || super_clazz);\n';
-			templatePre += '\t\t' + subClazzName + '.prototype.constructor = ' + subClazzName + ';\n';
 			//#1
-			templatePre += '\t\t' + subClazzName + '.prototype.$render = ';
+			templatePre += '\t\t' + subClazzName + '.prototype.render = ';
 
 			var subcomp = comp.children.find(sub_comp => sub_comp.type === 'tag' && ['require', 'style', 'script'].indexOf(sub_comp.name) === -1);
 
-			var childrenstr = '';
-			childrenstr += 'function(config_props){';
+			let childrenstr = '';
+			childrenstr += 'function(props){';
 
-			var dev_props = { "is": "${config_props.is}", "id": "${config_props.key_id}", "key:id": "${config_props.key_id}" };
+			// let dev_props = { "is": "${config_props.is}" };
+			// let dev_props = { "is": "compo-test" };
+			let dev_props = {  };
 
 			if (parser_configs.env === 'development' && resourcePath) {
-				dev_props = Object.assign({}, dev_props, {
-					"fjs-mode": parser_configs.env,
-					"fjs-resource-path": resourcePath
-				});
+				// dev_props = {
+				// 	...dev_props, 
+				// 	...{
+				// 		"fjs-mode": parser_configs.env,
+				// 		"fjs-resource-path": resourcePath
+				// 	}
+				// };
 			}
 
 			subcomp.attribs = Object.assign({}, subcomp.attribs || {}, dev_props);
 
 			let subcompSterie = Object.assign({}, subcomp, { children: [] });
-			subcompSterieStr = componentToStr(subcompSterie).replace(`_idom.elementClose("${subcompSterie.name}");`, '');
-			
-			if(subcomp.name !== 'fragment'){
-				subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
-			}
+			subcompSterieStr = '\nreturn '+componentToStr(subcompSterie).replace(/\n|\t/g,'').trim().replace('null)','null,').replace('})', '},');
+			// console.log('componentToStr(subcompSterie).trim():', componentToStr(subcompSterie).trim());
+			//if(subcomp.name !== 'fragment'){
+				// subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
+			//}
+			// console.log('subcompSterieStr:', subcompSterieStr);
+			const childrenLth = subcomp.children.length;
+			subcompSterieStr += subcomp.children.reduce((oldText, child, index) => {
+				//subcompSterieStr = subcompSterieStr + componentToStr(child) + (index < childrenLth-1 ? 'tem' : 'bbb');
+				// console.log('child', componentToStr(child).trim());
+				const childConverted = componentToStr(child);
+				// console.log('child-tm:'+childConverted.trim(), index+1 , childrenLth-1);
+				return oldText + childConverted +  (index+1 < childrenLth-1 && childConverted.trim().length  ? ',' : '');
+			}, '');
 
-			subcomp.children.forEach(child => subcompSterieStr += '\t\t' + componentToStr(child));
-
+			// console.log('subcompSterieStr2: ',subcompSterieStr2);
+			// console.log('subcompSterieStr:', subcompSterieStr);
 			childrenstr += subcompSterieStr;
-
-			if(subcomp.name !== 'fragment'){
-				childrenstr += `if(!config_props.loaded){_idom.elementClose("${subcomp.name}");};`;
-			}
 			
-			childrenstr += '\t}';
+			childrenstr += '\n);\t}';
 
 			templatePre += childrenstr;
 
@@ -819,9 +859,9 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 					//console.log('child-constructor:',childConstructor.attribs.init);
 					initStr = tagScriptConstructorToStr(childConstructor, 0); 
 				}
-				templatePre += `\t})(${initStr})`;
+				templatePre += `\t})(${initStr});`;
 			}
-
+			templatePre += 'return '+subClazzName+';';
 			templatePre += '\n});';
 
 			return templatePre;
@@ -978,7 +1018,7 @@ function componentToStr(comp, ...otherArgs) {
 		return tagComposeToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'fragment') {
-		return '';
+		return tagFragmentToStr(comp, ...otherArgs);
 	}
 
 	if (comp.name === 'content') {
