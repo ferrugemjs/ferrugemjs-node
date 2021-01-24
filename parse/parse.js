@@ -724,7 +724,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/dist/core/component-factory","@ferrugemjs/library/dist/core/loader"';
+			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/dist/core/component-factory"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -738,7 +738,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			templatePre += onlyRequiresStyles.join();
 
-			templatePre += '], function (exports,_idom,_libfjs_factory,_libfjs_loader';
+			templatePre += '], function (exports,_idom,_libfjs_factory';
 
 			if (modAlias.length) {
 				templatePre += ',';
@@ -978,7 +978,12 @@ function componentToStr(comp, ...otherArgs) {
 		return tagComposeToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'fragment') {
-		return '';
+		return comp.children.reduce((acum, curr) => {
+			if(curr.type !== 'text'){
+				return acum + tagBasicToStr(curr, ...otherArgs)
+			}
+			return acum;
+		}, '');
 	}
 
 	if (comp.name === 'content') {

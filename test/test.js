@@ -40,12 +40,14 @@ const rawHtml
 
 const rawHtml2 = `
 	<template no-model>
-		<fragment>
+		<div>
 			<p></p>
 			<div></div>
 			<p key:id="1234"></p>
-			<input type="text" change.bind="this.title"/>
-		</fragment>
+			<fragment>
+				<input type="text" change.bind="this.title"/>
+			</fragment>
+		</div>
 	</template>
 `;
 
