@@ -1,6 +1,6 @@
 {
   "name": "@ferrugemjs/compile",
-  "version": "2.2.8",
+  "version": "3.0.0",
   "description": "a node package to convert html template to Incremental DOM",
   "main": "index.js",
   "bin": {
@@ -33,13 +33,13 @@
   },
   "homepage": "https://github.com/ferrugemjs/ferrugemjs-node#readme",
   "devDependencies": {
-    "js-beautify": "^1.6.14",
-    "nodemon": "^1.11.0"
+    "js-beautify": "1.14.7",
+    "nodemon": "2.0.20"
   },
   "dependencies": {
-    "domhandler": "^2.3.0",
-    "htmlparser2": "^3.9.2",
-    "nanoid": "^0.2.0"
+    "domhandler": "5.0.3",
+    "htmlparser2": "8.0.1",
+    "nanoid": "4.0.1"
   },
   "directories": {
     "test": "test"
