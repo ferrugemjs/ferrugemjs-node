@@ -1,3 +1,4 @@
+// import fjsparse from "../parse/parse.mjs";
 var fjsparse = require("../parse/parse");
 var beautify = require('js-beautify').js_beautify;
 
@@ -5,14 +6,14 @@ var beautify = require('js-beautify').js_beautify;
 //<template no-view-model="true">
 
 console.reset = function () {
-  return process.stdout.write('\033c');
+	//   return process.stdout.write('\033c');
 }
 
 console.reset();
 
-const rawHtml 
-= 
-`<template no-model>
+const rawHtml
+	=
+	`<template no-model>
 	<require from="v3rtigo as v3r" type="namespace"/>
 	<div class="test">
 		<span>teste</span>
@@ -55,7 +56,7 @@ const rawHtml2 = `
 console.log(
 
 	beautify(
-	fjsparse(rawHtml2,{viewModel: 'test-comp', env: 'development', resourcePath: 'any/place/in/world/test-comp.html'})
-	, { indent_size: 4 }) 
+		fjsparse.default(rawHtml2, { viewModel: 'test-comp', env: 'development', resourcePath: 'any/place/in/world/test-comp.html' })
+		, { indent_size: 4 })
 
 )

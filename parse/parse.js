@@ -1,5 +1,5 @@
 var htmlparser = require("htmlparser2");
-var generate = require("nanoid/generate");
+const { v4: uuidv4 } = require('uuid');
 
 var buffer = [];
 var context_alias = 'this';
@@ -8,8 +8,7 @@ var requireNamespaces = [];
 var parser_configs = { templateExtension: ".html", viewModel: "testeViewModel", env: "development" };
 
 function nextUID() {
-	let alphabet = 'abcdefghijklmnopkrstuvwxzABCDEFGHIJKLMNOPKRSTUVWXZ';
-	var incrementalUID = generate(alphabet, 3) + generate(`0123456789_${alphabet}`, 19);
+	var incrementalUID = `f_${uuidv4().replaceAll('-', '_')}`;
 	return incrementalUID;
 }
 
@@ -50,7 +49,7 @@ function pathToAlias(p_resource_url) {
 		_trueurl = p_resource_url;
 		_aliasname = p_resource_url.substring(p_resource_url.lastIndexOf("/") + 1, p_resource_url.length);
 	};
-	return { alias: _aliasname, url: _trueurl};
+	return { alias: _aliasname, url: _trueurl };
 }
 
 function contextToAlias(str) {
@@ -234,23 +233,23 @@ function tagElseIfToStr(comp, indexLoopName) {
 
 
 function tagForToStr(comp, indexLoopName) {
-    let eachTxt = comp.attribs.each || '';
-    const isFor = eachTxt.indexOf(';') > -1;
+	let eachTxt = comp.attribs.each || '';
+	const isFor = eachTxt.indexOf(';') > -1;
 	let index_array = "$tmp_index_name_" + nextUID();
-    let txtFor = '';
+	let txtFor = '';
 
-    if(isFor){
-        var array_each = eachTxt.split(";");
-        array_each[0] = `${array_each[0]},${index_array} = 0`;
-        array_each[2] = `${array_each[2]},${index_array}++`;
-        eachTxt = array_each.join(";");
-	    txtFor = `\n\tfor(${eachTxt}){`;
-	    comp.children.forEach(sub_comp => txtFor += `\t${componentToStr(sub_comp, index_array, indexLoopName)}`);
-	    txtFor += `\t};\n`;
-        return txtFor;
-    }
+	if (isFor) {
+		var array_each = eachTxt.split(";");
+		array_each[0] = `${array_each[0]},${index_array} = 0`;
+		array_each[2] = `${array_each[2]},${index_array}++`;
+		eachTxt = array_each.join(";");
+		txtFor = `\n\tfor(${eachTxt}){`;
+		comp.children.forEach(sub_comp => txtFor += `\t${componentToStr(sub_comp, index_array, indexLoopName)}`);
+		txtFor += `\t};\n`;
+		return txtFor;
+	}
 
-    
+
 	var array_each = eachTxt.split(" in ");
 	var sub_array_each = array_each[0].split(",");
 	if (sub_array_each.length > 1) {
@@ -293,7 +292,7 @@ function tagTextToStr(comp, indexLoopName) {
 	if (comp.parent && comp.parent.attribs) {
 		let attrKeys = Object.keys(comp.parent.attribs);
 		attrDirectives = attrKeys
-			.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
+			.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({ alias }) => alias === tmpattr.split(":")[0]));
 	}
 	let text = comp.data;
 	if (text && text.trim()) {
@@ -367,9 +366,9 @@ function tagCustomToStr(comp, ...otherArgs) {
 		delete comp.attribs["key:id"];
 	}
 	*/
-	let indexLoopName  = '';
+	let indexLoopName = '';
 	let keyId = static_key;
-	if(otherArgs.length && typeof otherArgs[0] === 'string'){
+	if (otherArgs.length && typeof otherArgs[0] === 'string') {
 		indexLoopName = otherArgs[0];
 		keyId = `${keyId}_"+${otherArgs[0]}+"`;
 	}
@@ -378,7 +377,7 @@ function tagCustomToStr(comp, ...otherArgs) {
 	if (!comp.attribs["key:id"]) {
 		comp.attribs["key:id"] = static_key;
 		alreadyHasKeyId = false;
-	}else{
+	} else {
 		keyId = encodeAndSetContext(comp.attribs["key:id"]);
 		comp.attribs["key:id"] = keyId;
 	}
@@ -397,7 +396,7 @@ function tagCustomToStr(comp, ...otherArgs) {
 		namespace = tagname_splited[0];
 		tagname = tagname_splited[1];
 
-		if (!requireNamespaces.some(({alias}) => alias === namespace)) {
+		if (!requireNamespaces.some(({ alias }) => alias === namespace)) {
 			namespaceNotFound = true;
 			return tagBasicToStr(comp, ...otherArgs);
 		}
@@ -458,7 +457,7 @@ function tagCustomToStr(comp, ...otherArgs) {
 		basicTag += `(function(){`;
 		//console.log(comp.children[1].type);
 		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, ...otherArgs));
-	
+
 		basicTag += `}.bind(${static_key}))();`;
 	}
 
@@ -615,7 +614,7 @@ function tagBasicToStr(comp, indexLoopName) {
 	let attrDirectives = [];
 	if (comp.attribs) {
 		let attrKeys = Object.keys(comp.attribs);
-		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({alias}) => alias === tmpattr.split(":")[0]));
+		attrDirectives = attrKeys.filter(tmpattr => tmpattr !== "key:id" && tmpattr.indexOf(":") > -1 && requireNamespaces.some(({ alias }) => alias === tmpattr.split(":")[0]));
 	}
 
 	let tmpNodeAlias = 'executedNode_' + nextUID();
@@ -722,7 +721,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			requireNamespaces = requiresComp
 				.filter(reqcomp => reqcomp.type === "namespace")
-				.map(reqcomp => ({url: reqcomp.path, alias: reqcomp.alias }));
+				.map(reqcomp => ({ url: reqcomp.path, alias: reqcomp.alias }));
 
 			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/dist/core/component-factory"';
 
@@ -791,8 +790,8 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			let subcompSterie = Object.assign({}, subcomp, { children: [] });
 			subcompSterieStr = componentToStr(subcompSterie).replace(`_idom.elementClose("${subcompSterie.name}");`, '');
-			
-			if(subcomp.name !== 'fragment'){
+
+			if (subcomp.name !== 'fragment') {
 				subcompSterieStr = 'if(!config_props.loaded){' + subcompSterieStr + '};'
 			}
 
@@ -800,10 +799,10 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			childrenstr += subcompSterieStr;
 
-			if(subcomp.name !== 'fragment'){
+			if (subcomp.name !== 'fragment') {
 				childrenstr += `if(!config_props.loaded){_idom.elementClose("${subcomp.name}");};`;
 			}
-			
+
 			childrenstr += '\t}';
 
 			templatePre += childrenstr;
@@ -815,9 +814,9 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 			} else {
 				const childConstructor = comp.children.find(child => child.name === 'script' && child.attribs && child.attribs['init']);
 				let initStr = `function(){}`;
-				if(childConstructor){
+				if (childConstructor) {
 					//console.log('child-constructor:',childConstructor.attribs.init);
-					initStr = tagScriptConstructorToStr(childConstructor, 0); 
+					initStr = tagScriptConstructorToStr(childConstructor, 0);
 				}
 				templatePre += `\t})(${initStr})`;
 			}
@@ -833,7 +832,6 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 		console.warn(`warn: you need a root element into a template element to '${viewModel}' !`);
 		return "";
 	}
-	return "";
 }
 
 function tagStyleToStr(comp) {
@@ -979,7 +977,7 @@ function componentToStr(comp, ...otherArgs) {
 	}
 	if (comp.name === 'fragment') {
 		return comp.children.reduce((acum, curr) => {
-			if(curr.type !== 'text'){
+			if (curr.type !== 'text') {
 				return acum + tagBasicToStr(curr, ...otherArgs)
 			}
 			return acum;
@@ -1003,12 +1001,12 @@ function componentToStr(comp, ...otherArgs) {
 	}
 
 	if (comp.name.indexOf('-') > 0) {
-		if(comp.name.indexOf(':') > -1){
+		if (comp.name.indexOf(':') > -1) {
 			const [alias, comp_name] = comp.name.split(':');
-			if(
+			if (
 				comp_name === 'connect-provider'
 				&& requireNamespaces.some(reqNms => reqNms.alias === alias && reqNms.url === 'v3rtigo')
-			){
+			) {
 				comp.attribs['target'] = `\${${context_alias}}`;
 			}
 		}
@@ -1018,7 +1016,7 @@ function componentToStr(comp, ...otherArgs) {
 	return tagBasicToStr(comp, ...otherArgs);
 }
 
-module.exports = function (rawHtml, config) {
+const convert = (rawHtml, config) => {
 	flush();
 	var finalBuffer = "";
 	parser_configs = Object.assign({}, parser_configs, config);
@@ -1037,6 +1035,6 @@ module.exports = function (rawHtml, config) {
 	//liberando a memoria
 	flush();
 	return finalBuffer;
-
 }
 
+exports.default = convert;
