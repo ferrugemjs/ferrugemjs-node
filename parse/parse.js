@@ -5,6 +5,7 @@ var buffer = [];
 var context_alias = 'this';
 var requireScriptList = [];
 var requireNamespaces = [];
+var isUsingFJS = false;
 var parser_configs = { templateExtension: ".html", viewModel: "testeViewModel", env: "development" };
 
 function nextUID() {
@@ -25,6 +26,9 @@ function flush() {
 
 	requireNamespaces.length = 0;
 	requireNamespaces = [];
+
+	isUsingFJS = false;
+
 }
 
 function slashToCamelCase(str) {
@@ -342,7 +346,7 @@ function tagScriptConstructorToStr(comp) {
 }
 
 function tagCustomToStr(comp, ...otherArgs) {
-
+	isUsingFJS = true;
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
 	var static_key = 'custom_comp_keyid_' + nextUID();
 
@@ -640,9 +644,10 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 
 			if (viewModel) {
 				templatePre += '\n\tvar _' + viewModelAlias + '_tmp = Object.keys(' + viewModelAlias + ')[0];\n';
-			} else {
-				templatePre += '\n\tvar _' + tmp_mod_name + '_tmp = ' + _tmp_constructor_no_view_ + ';\n';
 			}
+			// else {
+			// 	templatePre += '\n\tvar _' + tmp_mod_name + '_tmp = ' + _tmp_constructor_no_view_ + ';\n';
+			// }
 
 			comp
 				.children
@@ -912,6 +917,10 @@ const convert = (rawHtml, config) => {
 		} else {
 			dom.filter(elementDom => elementDom.name === 'template').forEach(root_comp => appendBuffer(tagTemplateToStr(root_comp, config.viewModel, config.resourcePath)));
 			finalBuffer = buffer.join('');
+			// console.log(isUsingFJS, finalBuffer);
+			if (!isUsingFJS) {
+				finalBuffer = finalBuffer.replace(',_libfjs_factory', '').replace(',"@ferrugemjs/library/component-factory"', '');
+			}
 		}
 	});
 	var parser = new htmlparser.Parser(handler, { decodeEntities: true, recognizeSelfClosing: true });
