@@ -614,7 +614,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => ({ url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/dist/core/component-factory"';
+			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/component-factory"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
