@@ -45,6 +45,7 @@ const rawHtml2 = `
 			<p></p>
 			<div></div>
 			<p key:id="1234"></p>
+			<compose>opa</compose>
 			<fragment>
 				<input type="text" change.bind="this.title"/>
 			</fragment>

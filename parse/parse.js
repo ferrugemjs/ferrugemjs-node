@@ -488,86 +488,6 @@ function tagRpFunctionToStr(comp) {
 	return rpfnStr;
 }
 
-function tagComposeToStr(comp, indexLoopName) {
-	var attrview = "view:from";
-
-	if (!comp.attribs[attrview]) {
-		return "";
-	}
-	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
-	var static_key = '"compose_keyid_' + nextUID() + '"';
-	var alreadyHasKeyId = true;
-	if (comp.attribs && comp.attribs["key:id"]) {
-		static_key = '"' + encodeAndSetContext(comp.attribs["key:id"]) + '"';
-		//delete comp.attribs["key:id"];
-		comp.attribs["key-id"] = comp.attribs["key:id"];
-		comp.attribs["id"] = comp.attribs["key:id"];
-	} else {
-		comp.attribs["key:id"] = static_key.replace(/"/g, "");
-		comp.attribs["key-id"] = static_key.replace(/"/g, "");
-		comp.attribs["id"] = static_key.replace(/"/g, "");
-		alreadyHasKeyId = false;
-	}
-	//indexLoopName
-
-	comp.attribs["is"] = "compose-view";
-
-	var separateAttrsElement = separateAttribs(comp.attribs);
-
-	var tmp_view = (separateAttrsElement.static[attrview] ? separateAttrsElement.static[attrview] : encodeAndSetContext(separateAttrsElement.dinamic[attrview]));
-
-	delete separateAttrsElement.static[attrview];
-	delete separateAttrsElement.dinamic[attrview];
-
-	var mod_tmp_static_attr_str = JSON.stringify(separateAttrsElement.static);
-	var mod_tmp_static_attr_str_array_flat = objStaticAttrToStr(separateAttrsElement.static);
-
-	var mod_tmp_attr_str = objDinamicAttrToStr(separateAttrsElement.dinamic);
-
-	//console.log(mod_tmp_static_attr_str_array_flat);
-
-	if (!alreadyHasKeyId && indexLoopName) {
-
-		let tmpReplace = static_key + '+"_"+' + indexLoopName;
-		mod_tmp_static_attr_str_array_flat = mod_tmp_static_attr_str_array_flat.replace(new RegExp(static_key, 'g'), tmpReplace);
-		mod_tmp_static_attr_str = mod_tmp_static_attr_str.replace(new RegExp(static_key, 'g'), tmpReplace);
-		static_key = tmpReplace;
-	}
-
-	var _tmp_host_vars_ = attrToContext(separateAttrsElement.dinamic);
-	var _tmp_static_vars = JSON.stringify(separateAttrsElement.static);
-
-	if (!alreadyHasKeyId && indexLoopName) {
-		_tmp_static_vars = _tmp_static_vars.replace(static_key, static_key + '_"+' + indexLoopName + '+"');
-	}
-	// #2
-	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
-
-	var req_id = `_$req_${nextUID()}`;
-	var sub_item_id = `_subitemid_${nextUID()}`;
-	var basicTag = `\n\t_idom.elementVoid("div",${static_key},${mod_tmp_static_attr_str_array_flat},${mod_tmp_attr_str});\n`;
-	basicTag += `_libfjs_loader.default("${tmp_view}").then(function(_mod_${sub_item_id}){`;
-	basicTag += `\n\t
-		_libfjs_factory
-			.default(
-				_mod_${sub_item_id}.default,
-				${attrs_merged},
-				{
-					is:"${comp.attribs["is"]}",
-					key_id:"${encodeAndSetContext(comp.attribs["id"])}"
-				}
-			)
-			.content(function(){});
-		\n`;
-	basicTag += `}.bind(this));`
-
-	if (comp.children) {
-		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, indexLoopName));
-	}
-
-	return basicTag;
-}
-
 function tagBasicToStr(comp, indexLoopName) {
 	var static_key = 'null';
 	if (comp.attribs && comp.attribs["key:id"]) {
@@ -971,9 +891,6 @@ function componentToStr(comp, ...otherArgs) {
 	}
 	if (comp.name === 'route') {
 		return tagRouteToStr(comp, ...otherArgs);
-	}
-	if (comp.name === 'compose') {
-		return tagComposeToStr(comp, ...otherArgs);
 	}
 	if (comp.name === 'fragment') {
 		return comp.children.reduce((acum, curr) => {
