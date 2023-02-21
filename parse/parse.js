@@ -434,7 +434,7 @@ function tagCustomToStr(comp, ...otherArgs) {
 	// #2
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
-	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${keyId}"}).content(function(){${content}}.bind(${context_alias}));`;
+	var basicTag = `var ${static_key} = _libfjs_factory.componentFactory(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${keyId}"}).content(function(){${content}}.bind(${context_alias}));`;
 
 	basicTag += `${static_key}.$render({is:"${name}", key_id:"${keyId}"});`;
 
@@ -618,7 +618,7 @@ function tagTemplateToStr(comp, viewModel, resourcePath) {
 				.filter(reqcomp => reqcomp.type === "namespace")
 				.map(reqcomp => ({ url: reqcomp.path, alias: reqcomp.alias }));
 
-			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library/component-factory"';
+			templatePre += 'define(["exports","incremental-dom","@ferrugemjs/library"';
 
 			if (requiresPath.length) {
 				templatePre += ',';
@@ -919,7 +919,7 @@ const convert = (rawHtml, config) => {
 			finalBuffer = buffer.join('');
 			// console.log(isUsingFJS, finalBuffer);
 			if (!isUsingFJS) {
-				finalBuffer = finalBuffer.replace(',_libfjs_factory', '').replace(',"@ferrugemjs/library/component-factory"', '');
+				finalBuffer = finalBuffer.replace(',_libfjs_factory', '').replace(',"@ferrugemjs/library"', '');
 			}
 		}
 	});
