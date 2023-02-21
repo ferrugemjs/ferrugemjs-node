@@ -49,9 +49,12 @@ const rawHtml2 = `
 			<fragment>
 				<input type="text" change.bind="this.title"/>
 			</fragment>
-		</div>
-	</template>
-`;
+			<router>
+				agora vai
+			</router >
+		</div >
+	</template >
+	`;
 
 
 console.log(

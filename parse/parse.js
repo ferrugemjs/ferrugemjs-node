@@ -341,20 +341,6 @@ function tagScriptConstructorToStr(comp) {
 	return '';
 }
 
-function tagRouteToStr(comp, indexLoopName) {
-	var separateAttrsElement = separateAttribs(comp.attribs)
-	// var mod_tmp_static_attr_str = objStaticAttrToStr(separateAttrsElement.static);
-
-	//console.log(separateAttrsElement.static);
-	var attrsCamel = {};
-	for (var key in separateAttrsElement.static) {
-		attrsCamel[slashToCamelCase(key)] = separateAttrsElement.static[key];
-	}
-
-	var routeStr = `\n${context_alias}.pushRoute(${JSON.stringify(attrsCamel)});\n`;
-	return routeStr;
-}
-
 function tagCustomToStr(comp, ...otherArgs) {
 
 	//provendo um key caso nao exista, mas nao eh funcional em caso de foreach
@@ -433,15 +419,8 @@ function tagCustomToStr(comp, ...otherArgs) {
 		}
 	}
 
-	const hasContent = comp.children && comp.children.length;
-	let hasRoute = false;
+
 	let content = '';
-	if (hasContent) {
-		hasRoute = comp.children.some(sub_comp => sub_comp.name === "route");
-		if (!hasRoute) {
-			comp.children.forEach(sub_comp => content += '\t' + componentToStr(sub_comp, ...otherArgs));
-		}
-	}
 	var _tmp_host_vars_ = attrToContext(separate_attrs.dinamic);
 	var _tmp_static_vars = JSON.stringify(separate_attrs.static);
 
@@ -452,14 +431,6 @@ function tagCustomToStr(comp, ...otherArgs) {
 	const attrs_merged = `Object.assign({},${_tmp_host_vars_},${_tmp_static_vars})`;
 
 	var basicTag = `var ${static_key} = _libfjs_factory.default(${tagname_constructor},${attrs_merged},{is:"${name}", key_id:"${keyId}"}).content(function(){${content}}.bind(${context_alias}));`;
-
-	if (hasRoute) {
-		basicTag += `(function(){`;
-		//console.log(comp.children[1].type);
-		comp.children.forEach(sub_comp => basicTag += '\t' + componentToStr(sub_comp, ...otherArgs));
-
-		basicTag += `}.bind(${static_key}))();`;
-	}
 
 	basicTag += `${static_key}.$render({is:"${name}", key_id:"${keyId}"});`;
 
@@ -889,9 +860,7 @@ function componentToStr(comp, ...otherArgs) {
 	if (comp.name === 'elseif') {
 		return tagElseIfToStr(comp, ...otherArgs);
 	}
-	if (comp.name === 'route') {
-		return tagRouteToStr(comp, ...otherArgs);
-	}
+
 	if (comp.name === 'fragment') {
 		return comp.children.reduce((acum, curr) => {
 			if (curr.type !== 'text') {
